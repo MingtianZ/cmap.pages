@@ -13,12 +13,39 @@
       height: var(--bar-h); display:flex; gap:10px; align-items:center; padding:0 12px;
       border-bottom:1px solid #eee; background:#fafafa; position: sticky; top:0; z-index:1;
     }
-    #viewer { height: calc(100vh - var(--bar-h)); width: 100%; }
+    #viewer { height: calc(100vh - var(--bar-h)); width: 100%; position: relative; }
     .pill { padding:4px 8px; background:#f5f5f5; border-radius: 999px; }
     #dropzone {
       position:absolute; inset:var(--bar-h) 0 0 0; display:none; align-items:center; justify-content:center;
       border:3px dashed #bbb; background:rgba(240,240,240,.7); font-size:18px; font-weight:600;
     }
+
+    /* 测量面板 */
+    #measurePanel {
+      position: absolute; top: 20px; right: 20px; width: 280px;
+      background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      padding: 16px; font-size: 13px; z-index: 10;
+    }
+    #measurePanel h3 { margin: 0 0 12px 0; font-size: 15px; font-weight: 600; }
+    .atom-list { margin: 8px 0; }
+    .atom-item {
+      display: flex; align-items: center; gap: 8px; padding: 4px 0;
+    }
+    .atom-color {
+      width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff;
+      box-shadow: 0 0 0 1px #ddd;
+    }
+    .dihedral-result {
+      margin-top: 12px; padding: 12px; background: #f0f9ff;
+      border-left: 3px solid #0284c7; border-radius: 4px;
+    }
+    .dihedral-result strong { color: #0284c7; font-size: 18px; }
+    button {
+      padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;
+      background: white; cursor: pointer; font-size: 13px;
+    }
+    button:hover { background: #f5f5f5; }
+    .clear-btn { margin-top: 8px; width: 100%; }
   </style>
 </head>
 <body>
@@ -29,14 +56,66 @@
     <span class="pill">或用 URL 参数：?file=assets/demo.xyz</span>
   </header>
 
-  <div id="viewer" aria-label="3Dmol viewer"></div>
+  <div id="viewer" aria-label="3Dmol viewer">
+    <!-- 测量面板 -->
+    <div id="measurePanel">
+      <h3>二面角测量</h3>
+      <p style="color: #666; margin: 0 0 8px 0;">点击4个原子以测量二面角</p>
+      <div class="atom-list" id="atomList">
+        <p style="color: #999; margin: 8px 0;">未选择原子</p>
+      </div>
+      <div id="dihedralResult"></div>
+      <button class="clear-btn" id="clearBtn">清除选择</button>
+    </div>
+  </div>
   <div id="dropzone">释放鼠标，加载 XYZ 文件</div>
 
   <!-- 初始化脚本（ESM） -->
   <script type="module">
     import { XYZViewer } from './js/viewer.js';
 
-    const viewer = new XYZViewer('viewer', { backgroundColor: 'white' });
+    // 初始化 viewer，添加选择变化回调
+    const viewer = new XYZViewer('viewer', {
+      backgroundColor: 'white',
+      onSelectionChange: updateMeasurePanel
+    });
+
+    // 更新测量面板
+    function updateMeasurePanel(data) {
+      const atomList = document.getElementById('atomList');
+      const dihedralResult = document.getElementById('dihedralResult');
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
+
+      // 更新原子列表
+      if (data.count === 0) {
+        atomList.innerHTML = '<p style="color: #999; margin: 8px 0;">未选择原子</p>';
+      } else {
+        atomList.innerHTML = data.atoms.map((atom, idx) => `
+          <div class="atom-item">
+            <span class="atom-color" style="background: ${colors[idx]}"></span>
+            <span>${idx + 1}. ${atom.elem} #${atom.serial}</span>
+            <span style="color: #999; font-size: 11px;">
+              (${atom.x.toFixed(2)}, ${atom.y.toFixed(2)}, ${atom.z.toFixed(2)})
+            </span>
+          </div>
+        `).join('');
+      }
+
+      // 更新二面角结果
+      if (data.dihedral) {
+        dihedralResult.innerHTML = `
+          <div class="dihedral-result">
+            <div style="margin-bottom: 4px;">二面角:</div>
+            <strong>${data.dihedral.degrees.toFixed(2)}°</strong>
+            <div style="color: #666; font-size: 11px; margin-top: 4px;">
+              ${data.dihedral.radians.toFixed(4)} rad
+            </div>
+          </div>
+        `;
+      } else {
+        dihedralResult.innerHTML = '';
+      }
+    }
 
     // 1) URL 参数加载 ?file=路径
     const params = new URLSearchParams(location.search);
@@ -68,6 +147,9 @@
 
     // Fit 按钮
     document.getElementById('fitBtn').onclick = () => viewer.fit();
+
+    // 清除选择按钮
+    document.getElementById('clearBtn').onclick = () => viewer.clearSelection();
   </script>
 </body>
 </html>
