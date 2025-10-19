@@ -2,12 +2,14 @@
 import * as XYZReader from './tools/xyz-reader.js';
 import * as GridViewer from './tools/grid-viewer.js';
 import * as AboutT3PS from './tools/about-t3ps.js';
+import * as GlobalQMSurvey from './tools/global-qm-survey.js';
 
 // Tool registry
 const tools = {
   'xyz-reader': XYZReader,
   'grid-viewer': GridViewer,
-  'about-t3ps': AboutT3PS
+  'about-t3ps': AboutT3PS,
+  'global-qm-survey': GlobalQMSurvey
 };
 
 let currentTool = null;
