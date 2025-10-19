@@ -25,3 +25,13 @@ Thumbs.db
 # Build
 dist/
 build/
+
+# AI/Claude
+.claude/
+[Cc][Ll][Aa][Uu][Dd][Ee].md
+CLAUDE.MD
+[Aa][Gg][Ee][Nn][Tt].md
+AGENT.MD
+*.claude
+.cursor/
+.aider*
