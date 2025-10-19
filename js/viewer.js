@@ -38,10 +38,12 @@ export class XYZViewer {
   /** 启用原子点击选择 */
   _enableAtomClick() {
     if (!this.model) return;
+    const self = this;
     const atoms = this.model.selectedAtoms({});
     atoms.forEach(atom => {
-      atom.clickable = true;
-      atom.callback = (clickedAtom) => this._handleAtomClick(clickedAtom);
+      self.viewer.setClickable({serial: atom.serial}, true, function(clickedAtom) {
+        self._handleAtomClick(clickedAtom);
+      });
     });
   }
 
