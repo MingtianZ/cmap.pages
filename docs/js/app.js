@@ -1,11 +1,13 @@
 // Main application logic
 import * as XYZReader from './tools/xyz-reader.js';
 import * as GridViewer from './tools/grid-viewer.js';
+import * as AboutT3PS from './tools/about-t3ps.js';
 
 // Tool registry
 const tools = {
   'xyz-reader': XYZReader,
-  'grid-viewer': GridViewer
+  'grid-viewer': GridViewer,
+  'about-t3ps': AboutT3PS
 };
 
 let currentTool = null;
