@@ -3,153 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>3Dmol.js XYZ Viewer</title>
-  <!-- 3Dmol.js CDN（全局对象 $3Dmol） -->
+  <title>分子工具集</title>
+  <link rel="stylesheet" href="css/main.css" />
   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
-  <style>
-    :root { --bar-h: 56px; }
-    body { margin:0; font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
-    header {
-      height: var(--bar-h); display:flex; gap:10px; align-items:center; padding:0 12px;
-      border-bottom:1px solid #eee; background:#fafafa; position: sticky; top:0; z-index:1;
-    }
-    #viewer { height: calc(100vh - var(--bar-h)); width: 100%; position: relative; }
-    .pill { padding:4px 8px; background:#f5f5f5; border-radius: 999px; }
-    #dropzone {
-      position:absolute; inset:var(--bar-h) 0 0 0; display:none; align-items:center; justify-content:center;
-      border:3px dashed #bbb; background:rgba(240,240,240,.7); font-size:18px; font-weight:600;
-    }
-
-    /* 测量面板 */
-    #measurePanel {
-      position: absolute; top: 20px; right: 20px; width: 280px;
-      background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-      padding: 16px; font-size: 13px; z-index: 10;
-    }
-    #measurePanel h3 { margin: 0 0 12px 0; font-size: 15px; font-weight: 600; }
-    .atom-list { margin: 8px 0; }
-    .atom-item {
-      display: flex; align-items: center; gap: 8px; padding: 4px 0;
-    }
-    .atom-color {
-      width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff;
-      box-shadow: 0 0 0 1px #ddd;
-    }
-    .dihedral-result {
-      margin-top: 12px; padding: 12px; background: #f0f9ff;
-      border-left: 3px solid #0284c7; border-radius: 4px;
-    }
-    .dihedral-result strong { color: #0284c7; font-size: 18px; }
-    button {
-      padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;
-      background: white; cursor: pointer; font-size: 13px;
-    }
-    button:hover { background: #f5f5f5; }
-    .clear-btn { margin-top: 8px; width: 100%; }
-  </style>
 </head>
 <body>
-  <header>
-    <input id="fileInput" type="file" accept=".xyz" />
-    <button id="fitBtn">Fit</button>
-    <span class="pill">可拖拽 .xyz 到页面</span>
-    <span class="pill">或用 URL 参数：?file=assets/demo.xyz</span>
-  </header>
-
-  <div id="viewer" aria-label="3Dmol viewer">
-    <!-- 测量面板 -->
-    <div id="measurePanel">
-      <h3>二面角测量</h3>
-      <p style="color: #666; margin: 0 0 8px 0;">点击4个原子以测量二面角</p>
-      <div class="atom-list" id="atomList">
-        <p style="color: #999; margin: 8px 0;">未选择原子</p>
+  <!-- 菜单栏 -->
+  <nav class="menubar">
+    <div class="menu-item" id="menu-t3ps">
+      T3PS ▼
+      <div class="dropdown">
+        <div class="dropdown-item" onclick="showTool('welcome')">欢迎页</div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item">关于 T3PS</div>
       </div>
-      <div id="dihedralResult"></div>
-      <button class="clear-btn" id="clearBtn">清除选择</button>
     </div>
-  </div>
-  <div id="dropzone">释放鼠标，加载 XYZ 文件</div>
 
-  <!-- 初始化脚本（ESM） -->
+    <div class="menu-item" id="menu-tools">
+      工具 ▼
+      <div class="dropdown">
+        <div class="dropdown-item" onclick="showTool('xyz-reader')">XYZ Reader</div>
+        <div class="dropdown-item" onclick="showTool('grid-viewer')">Grid Viewer</div>
+      </div>
+    </div>
+
+    <div class="menu-item" id="menu-help">
+      帮助 ▼
+      <div class="dropdown">
+        <div class="dropdown-item">使用说明</div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" onclick="window.open('https://github.com', '_blank')">GitHub</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main id="main-content">
+    <!-- 欢迎页 -->
+    <div id="welcome" class="tool-panel active">
+      <h1>分子工具集</h1>
+      <p>选择上方菜单开始使用</p>
+    </div>
+
+    <!-- XYZ Reader（动态加载） -->
+    <div id="xyz-reader" class="tool-panel"></div>
+
+    <!-- Grid Viewer（动态加载） -->
+    <div id="grid-viewer" class="tool-panel"></div>
+  </main>
+
+  <!-- 主应用脚本 -->
   <script type="module">
-    import { XYZViewer } from './js/viewer.js';
-
-    // 初始化 viewer，添加选择变化回调
-    const viewer = new XYZViewer('viewer', {
-      backgroundColor: 'white',
-      onSelectionChange: updateMeasurePanel
-    });
-
-    // 更新测量面板
-    function updateMeasurePanel(data) {
-      const atomList = document.getElementById('atomList');
-      const dihedralResult = document.getElementById('dihedralResult');
-      const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
-
-      // 更新原子列表
-      if (data.count === 0) {
-        atomList.innerHTML = '<p style="color: #999; margin: 8px 0;">未选择原子</p>';
-      } else {
-        atomList.innerHTML = data.atoms.map((atom, idx) => `
-          <div class="atom-item">
-            <span class="atom-color" style="background: ${colors[idx]}"></span>
-            <span>${idx + 1}. ${atom.elem} #${atom.serial}</span>
-            <span style="color: #999; font-size: 11px;">
-              (${atom.x.toFixed(2)}, ${atom.y.toFixed(2)}, ${atom.z.toFixed(2)})
-            </span>
-          </div>
-        `).join('');
-      }
-
-      // 更新二面角结果
-      if (data.dihedral) {
-        dihedralResult.innerHTML = `
-          <div class="dihedral-result">
-            <div style="margin-bottom: 4px;">二面角:</div>
-            <strong>${data.dihedral.degrees.toFixed(2)}°</strong>
-            <div style="color: #666; font-size: 11px; margin-top: 4px;">
-              ${data.dihedral.radians.toFixed(4)} rad
-            </div>
-          </div>
-        `;
-      } else {
-        dihedralResult.innerHTML = '';
-      }
-    }
-
-    // 1) URL 参数加载 ?file=路径
-    const params = new URLSearchParams(location.search);
-    const url = params.get('file');
-    if (url) viewer.loadURL(url).catch(err => alert('加载失败：' + err));
-
-    // 2) 本地选择
-    const fileInput = document.getElementById('fileInput');
-    fileInput.addEventListener('change', async (e) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      const text = await f.text();
-      viewer.loadText(text);
-    });
-
-    // 3) 拖拽加载
-    const dropzone = document.getElementById('dropzone');
-    const on = (el, ev, fn) => el.addEventListener(ev, fn);
-    on(window, 'dragenter', e => { e.preventDefault(); dropzone.style.display='flex'; });
-    ['dragover','dragleave','drop'].forEach(ev => on(window, ev, e => e.preventDefault()));
-    on(window, 'dragleave', () => dropzone.style.display='none');
-    on(window, 'drop', async (e) => {
-      dropzone.style.display='none';
-      const f = e.dataTransfer?.files?.[0];
-      if (!f) return;
-      const text = await f.text();
-      viewer.loadText(text);
-    });
-
-    // Fit 按钮
-    document.getElementById('fitBtn').onclick = () => viewer.fit();
-
-    // 清除选择按钮
-    document.getElementById('clearBtn').onclick = () => viewer.clearSelection();
+    import { init } from './js/app.js';
+    init();
   </script>
 </body>
 </html>
