@@ -75,7 +75,7 @@ body {
 /* 主内容区 */
 #main-content {
   height: calc(100vh - 40px);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .tool-panel {
@@ -87,25 +87,33 @@ body {
   display: block;
 }
 
-/* 欢迎页 */
-#welcome.active {
+/* 工具布局类型 - 组合使用 */
+.tool-layout-flex {
   display: flex;
   flex-direction: column;
+}
+
+.tool-layout-centered {
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  flex-direction: column;
+}
+
+/* 工具主题 */
+.tool-theme-welcome {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
 }
 
-#welcome h1 {
+.tool-theme-welcome h1 {
   font-size: 48px;
   margin: 0 0 16px 0;
   font-weight: 700;
 }
 
-#welcome p {
+.tool-theme-welcome p {
   font-size: 18px;
   opacity: 0.9;
   margin: 0;
@@ -123,13 +131,6 @@ button {
 
 button:hover {
   background: #f5f5f5;
-}
-
-/* XYZ Reader 样式 */
-#xyz-reader {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 }
 
 .tool-header {
