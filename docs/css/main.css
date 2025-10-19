@@ -1,4 +1,4 @@
-/* 全局样式 */
+/* Global styles */
 * {
   box-sizing: border-box;
 }
@@ -9,7 +9,7 @@ body {
         "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
-/* 菜单栏 */
+/* Menu bar */
 .menubar {
   height: 40px;
   background: #2c3e50;
@@ -72,7 +72,7 @@ body {
   margin: 4px 0;
 }
 
-/* 主内容区 */
+/* Main content area */
 #main-content {
   height: calc(100vh - 40px);
   overflow: hidden;
@@ -87,20 +87,20 @@ body {
   display: block;
 }
 
-/* 工具布局类型 - 组合使用 */
-.tool-layout-flex {
+/* Tool layout types - composable (higher specificity when active) */
+.tool-panel.tool-layout-flex.active {
   display: flex;
   flex-direction: column;
 }
 
-.tool-layout-centered {
+.tool-panel.tool-layout-centered.active {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
 }
 
-/* 工具主题 */
+/* Tool themes */
 .tool-theme-welcome {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -119,7 +119,7 @@ body {
   margin: 0;
 }
 
-/* 通用按钮样式 */
+/* Common button styles */
 button {
   padding: 6px 12px;
   border: 1px solid #ddd;
@@ -169,7 +169,7 @@ button:hover {
   z-index: 100;
 }
 
-/* 测量面板 */
+/* Measurement panel */
 #measurePanel {
   position: absolute;
   top: 20px;

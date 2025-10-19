@@ -1,11 +1,11 @@
-// Grid Viewer 工具模块（占位）
+// Grid Viewer tool module (placeholder)
 
 export function getHTML() {
   return `
     <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
       <div style="text-align: center;">
         <h2>Grid Viewer</h2>
-        <p>24x24 网格查看器功能开发中...</p>
+        <p>24x24 grid viewer feature in development...</p>
       </div>
     </div>
   `;

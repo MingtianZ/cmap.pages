@@ -1,4 +1,4 @@
-// XYZ Reader 工具模块
+// XYZ Reader tool module
 import { XYZViewer } from '../viewer.js';
 
 export function getHTML() {
@@ -6,23 +6,23 @@ export function getHTML() {
     <div class="tool-header">
       <input id="fileInput" type="file" accept=".xyz" />
       <button id="fitBtn">Fit</button>
-      <span class="pill">可拖拽 .xyz 到页面</span>
-      <span class="pill">或用 URL 参数：?file=assets/demo.xyz</span>
+      <span class="pill">Drag .xyz files here</span>
+      <span class="pill">Or use URL param: ?file=assets/demo.xyz</span>
     </div>
 
     <div id="viewer" aria-label="3Dmol viewer">
       <div id="measurePanel">
-        <h3>二面角测量</h3>
-        <p style="color: #666; margin: 0 0 8px 0;">点击4个原子以测量二面角</p>
+        <h3>Dihedral Angle Measurement</h3>
+        <p style="color: #666; margin: 0 0 8px 0;">Click 4 atoms to measure dihedral angle</p>
         <div class="atom-list" id="atomList">
-          <p style="color: #999; margin: 8px 0;">未选择原子</p>
+          <p style="color: #999; margin: 8px 0;">No atoms selected</p>
         </div>
         <div id="dihedralResult"></div>
-        <button class="clear-btn" id="clearBtn">清除选择</button>
+        <button class="clear-btn" id="clearBtn">Clear Selection</button>
       </div>
     </div>
 
-    <div id="dropzone">释放鼠标，加载 XYZ 文件</div>
+    <div id="dropzone">Release to load XYZ file</div>
   `;
 }
 
@@ -32,14 +32,14 @@ export function init() {
     onSelectionChange: updateMeasurePanel
   });
 
-  // 更新测量面板
+  // Update measurement panel
   function updateMeasurePanel(data) {
     const atomList = document.getElementById('atomList');
     const dihedralResult = document.getElementById('dihedralResult');
     const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
 
     if (data.count === 0) {
-      atomList.innerHTML = '<p style="color: #999; margin: 8px 0;">未选择原子</p>';
+      atomList.innerHTML = '<p style="color: #999; margin: 8px 0;">No atoms selected</p>';
     } else {
       atomList.innerHTML = data.atoms.map((atom, idx) => `
         <div class="atom-item">
@@ -55,7 +55,7 @@ export function init() {
     if (data.dihedral) {
       dihedralResult.innerHTML = `
         <div class="dihedral-result">
-          <div style="margin-bottom: 4px;">二面角:</div>
+          <div style="margin-bottom: 4px;">Dihedral Angle:</div>
           <strong>${data.dihedral.degrees.toFixed(2)}°</strong>
           <div style="color: #666; font-size: 11px; margin-top: 4px;">
             ${data.dihedral.radians.toFixed(4)} rad
@@ -67,14 +67,14 @@ export function init() {
     }
   }
 
-  // URL 参数加载
+  // Load from URL parameter
   const params = new URLSearchParams(location.search);
   const url = params.get('file');
   if (url) {
-    viewer.loadURL(url).catch(err => alert('加载失败：' + err));
+    viewer.loadURL(url).catch(err => alert('Load failed: ' + err));
   }
 
-  // 本地选择
+  // Local file selection
   const fileInput = document.getElementById('fileInput');
   fileInput.addEventListener('change', async (e) => {
     const f = e.target.files?.[0];
@@ -83,7 +83,7 @@ export function init() {
     viewer.loadText(text);
   });
 
-  // 拖拽加载
+  // Drag and drop loading
   const dropzone = document.getElementById('dropzone');
   const viewerEl = document.getElementById('viewer');
   const on = (el, ev, fn) => el.addEventListener(ev, fn);
@@ -117,10 +117,10 @@ export function init() {
     viewer.loadText(text);
   });
 
-  // Fit 按钮
+  // Fit button
   document.getElementById('fitBtn').onclick = () => viewer.fit();
 
-  // 清除选择按钮
+  // Clear selection button
   document.getElementById('clearBtn').onclick = () => viewer.clearSelection();
 
   return viewer;

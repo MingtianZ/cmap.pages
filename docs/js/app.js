@@ -1,8 +1,8 @@
-// 主应用逻辑
+// Main application logic
 import * as XYZReader from './tools/xyz-reader.js';
 import * as GridViewer from './tools/grid-viewer.js';
 
-// 工具注册表
+// Tool registry
 const tools = {
   'xyz-reader': XYZReader,
   'grid-viewer': GridViewer
@@ -11,64 +11,64 @@ const tools = {
 let currentTool = null;
 let toolInstances = {};
 
-// 初始化应用
+// Initialize application
 export function init() {
   setupMenuInteraction();
 
-  // 检查 URL 参数，如果有 file 参数，直接打开 xyz-reader
+  // Check URL params, if file param exists, directly open xyz-reader
   const params = new URLSearchParams(location.search);
   if (params.get('file')) {
     showTool('xyz-reader');
   }
 }
 
-// 设置菜单交互
+// Setup menu interaction
 function setupMenuInteraction() {
-  // 菜单点击
+  // Menu click
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', (e) => {
       e.stopPropagation();
-      // 关闭其他菜单
+      // Close other menus
       document.querySelectorAll('.menu-item').forEach(m => {
         if (m !== item) m.classList.remove('active');
       });
-      // 切换当前菜单
+      // Toggle current menu
       item.classList.toggle('active');
     });
   });
 
-  // 点击其他地方关闭菜单
+  // Click elsewhere to close menu
   document.addEventListener('click', () => {
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
   });
 }
 
-// 切换工具
+// Switch tools
 export function showTool(toolId) {
-  // 隐藏所有工具面板
+  // Hide all tool panels
   document.querySelectorAll('.tool-panel').forEach(panel => {
     panel.classList.remove('active');
   });
 
-  // 显示选中的工具
+  // Show selected tool
   const toolPanel = document.getElementById(toolId);
   if (toolPanel) {
     toolPanel.classList.add('active');
 
-    // 如果工具还没有初始化，则初始化
+    // Initialize tool if not already initialized
     if (tools[toolId] && !toolInstances[toolId]) {
-      // 设置 HTML 内容
+      // Set HTML content
       toolPanel.innerHTML = tools[toolId].getHTML();
-      // 初始化工具
+      // Initialize tool
       toolInstances[toolId] = tools[toolId].init();
     }
 
     currentTool = toolId;
   }
 
-  // 关闭菜单
+  // Close menu
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
 }
 
-// 导出到全局，方便 HTML 内联事件调用
+// Export to global for HTML inline event calls
 window.showTool = showTool;

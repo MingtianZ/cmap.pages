@@ -1,26 +1,26 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>分子工具集</title>
+  <title>Molecular Tools</title>
   <link rel="stylesheet" href="css/main.css" />
   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 </head>
 <body>
-  <!-- 菜单栏 -->
+  <!-- Menu bar -->
   <nav class="menubar">
     <div class="menu-item" id="menu-t3ps">
       T3PS ▼
       <div class="dropdown">
-        <div class="dropdown-item" onclick="showTool('welcome')">欢迎页</div>
+        <div class="dropdown-item" onclick="showTool('welcome')">Home</div>
         <div class="dropdown-divider"></div>
-        <div class="dropdown-item">关于 T3PS</div>
+        <div class="dropdown-item">About T3PS</div>
       </div>
     </div>
 
     <div class="menu-item" id="menu-tools">
-      工具 ▼
+      Tools ▼
       <div class="dropdown">
         <div class="dropdown-item" onclick="showTool('xyz-reader')">XYZ Reader</div>
         <div class="dropdown-item" onclick="showTool('grid-viewer')">Grid Viewer</div>
@@ -28,31 +28,31 @@
     </div>
 
     <div class="menu-item" id="menu-help">
-      帮助 ▼
+      Help ▼
       <div class="dropdown">
-        <div class="dropdown-item">使用说明</div>
+        <div class="dropdown-item">Documentation</div>
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" onclick="window.open('https://github.com', '_blank')">GitHub</div>
       </div>
     </div>
   </nav>
 
-  <!-- 主内容区 -->
+  <!-- Main content area -->
   <main id="main-content">
-    <!-- 欢迎页 -->
+    <!-- Welcome page -->
     <div id="welcome" class="tool-panel tool-layout-centered tool-theme-welcome active">
-      <h1>分子工具集</h1>
-      <p>选择上方菜单开始使用</p>
+      <h1>Molecular Tools</h1>
+      <p>Select a tool from the menu above to get started</p>
     </div>
 
-    <!-- XYZ Reader（动态加载） -->
+    <!-- XYZ Reader (dynamically loaded) -->
     <div id="xyz-reader" class="tool-panel tool-layout-flex"></div>
 
-    <!-- Grid Viewer（动态加载） -->
+    <!-- Grid Viewer (dynamically loaded) -->
     <div id="grid-viewer" class="tool-panel"></div>
   </main>
 
-  <!-- 主应用脚本 -->
+  <!-- Main application script -->
   <script type="module">
     import { init } from './js/app.js';
     init();
