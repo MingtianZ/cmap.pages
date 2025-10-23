@@ -30,9 +30,13 @@ export function getHTML() {
           <option value="line">Line</option>
         </optgroup>
         <optgroup label="Surface">
-          <option value="surface-vdw">VDW Surface</option>
-          <option value="surface-sas">SAS Surface</option>
-          <option value="surface-ms">MS Surface</option>
+          <option value="surface-ms">MS (Atom Color)</option>
+          <option value="surface-ms-chain">MS (Chain Color)</option>
+          <option value="surface-ms-white">MS (White)</option>
+          <option value="surface-vdw">VDW (Atom Color)</option>
+          <option value="surface-vdw-white">VDW (White)</option>
+          <option value="surface-sas">SAS (Atom Color)</option>
+          <option value="surface-sas-white">SAS (White)</option>
         </optgroup>
       </select>
       <span class="pill" style="font-size: 12px;">📁 Supports: PDB, XYZ, MOL2, SDF, CIF, CUBE</span>
@@ -350,14 +354,34 @@ export function init() {
       case 'surface-vdw':
         baseStyle = {cartoon: {color: 'spectrum'}};
         viewer.viewer.setStyle({}, baseStyle);
-        viewer.viewer.addSurface('VDW', {opacity: 0.7, color: 'white'});
+        viewer.viewer.addSurface('VDW', {opacity: 0.85, colorscheme: 'default'});
         break;
       case 'surface-sas':
         baseStyle = {cartoon: {color: 'spectrum'}};
         viewer.viewer.setStyle({}, baseStyle);
-        viewer.viewer.addSurface('SAS', {opacity: 0.7, color: 'white'});
+        viewer.viewer.addSurface('SAS', {opacity: 0.85, colorscheme: 'default'});
         break;
       case 'surface-ms':
+        baseStyle = {cartoon: {color: 'spectrum'}};
+        viewer.viewer.setStyle({}, baseStyle);
+        viewer.viewer.addSurface('MS', {opacity: 0.85, colorscheme: 'default'});
+        break;
+      case 'surface-ms-chain':
+        baseStyle = {cartoon: {color: 'spectrum'}};
+        viewer.viewer.setStyle({}, baseStyle);
+        viewer.viewer.addSurface('MS', {opacity: 0.85, colorscheme: 'chain'});
+        break;
+      case 'surface-vdw-white':
+        baseStyle = {cartoon: {color: 'spectrum'}};
+        viewer.viewer.setStyle({}, baseStyle);
+        viewer.viewer.addSurface('VDW', {opacity: 0.7, color: 'white'});
+        break;
+      case 'surface-sas-white':
+        baseStyle = {cartoon: {color: 'spectrum'}};
+        viewer.viewer.setStyle({}, baseStyle);
+        viewer.viewer.addSurface('SAS', {opacity: 0.7, color: 'white'});
+        break;
+      case 'surface-ms-white':
         baseStyle = {cartoon: {color: 'spectrum'}};
         viewer.viewer.setStyle({}, baseStyle);
         viewer.viewer.addSurface('MS', {opacity: 0.7, color: 'white'});
