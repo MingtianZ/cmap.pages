@@ -100,6 +100,33 @@ export class XYZViewer {
     this.viewer.render();
   }
 
+  /** Calculate distance between two points */
+  _calcDistance(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dz = p2.z - p1.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  /** Calculate angle formed by three points (in radians) */
+  _calcAngle(p1, p2, p3) {
+    // Vectors from p2 to p1 and p2 to p3
+    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y, z: p1.z - p2.z };
+    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y, z: p3.z - p2.z };
+
+    // Normalize vectors
+    const v1_norm = this._normalize(v1);
+    const v2_norm = this._normalize(v2);
+
+    // cos(θ) = v1·v2
+    const cosTheta = this._dot(v1_norm, v2_norm);
+
+    // Clamp to [-1, 1] to avoid numerical errors
+    const clampedCos = Math.max(-1, Math.min(1, cosTheta));
+
+    return Math.acos(clampedCos);
+  }
+
   /** Calculate dihedral angle (radians) */
   _calcDihedral(p1, p2, p3, p4) {
     // Vector operations
@@ -153,12 +180,26 @@ export class XYZViewer {
     let result = {
       count: this.selectedAtoms.length,
       atoms: this.selectedAtoms,
+      distance: null,
+      angle: null,
       dihedral: null
     };
 
-    if (this.selectedAtoms.length === 4) {
-      const rad = this._calcDihedral(...this.selectedAtoms);
+    if (this.selectedAtoms.length === 2) {
+      // Calculate distance between 2 atoms
+      const dist = this._calcDistance(this.selectedAtoms[0], this.selectedAtoms[1]);
+      result.distance = { angstroms: dist };
+    } else if (this.selectedAtoms.length === 3) {
+      // Calculate angle formed by 3 atoms
+      const rad = this._calcAngle(this.selectedAtoms[0], this.selectedAtoms[1], this.selectedAtoms[2]);
       const deg = rad * (180 / Math.PI);
+      result.angle = { radians: rad, degrees: deg };
+    } else if (this.selectedAtoms.length === 4) {
+      // Calculate dihedral angle for 4 atoms
+      const rad = this._calcDihedral(...this.selectedAtoms);
+      let deg = rad * (180 / Math.PI);
+      // Convert to 0-360 range
+      if (deg < 0) deg += 360;
       result.dihedral = { radians: rad, degrees: deg };
     }
 

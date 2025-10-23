@@ -1,15 +1,20 @@
 // Main application logic
 import * as XYZReader from './tools/xyz-reader.js';
-import * as GridViewer from './tools/grid-viewer.js';
 import * as AboutT3PS from './tools/about-t3ps.js';
 import * as GlobalQMSurvey from './tools/global-qm-survey.js';
+import * as GlobalSingle from './tools/global-single.js';
 
 // Tool registry
 const tools = {
   'xyz-reader': XYZReader,
-  'grid-viewer': GridViewer,
   'about-t3ps': AboutT3PS,
-  'global-qm-survey': GlobalQMSurvey
+  'global-qm-survey': GlobalQMSurvey,
+  'global-ag-qm': GlobalSingle,
+  'global-ag-survey': GlobalSingle,
+  'global-ez-qm': GlobalSingle,
+  'global-ez-survey': GlobalSingle,
+  'global-za-qm': GlobalSingle,
+  'global-za-survey': GlobalSingle
 };
 
 let currentTool = null;

@@ -17,7 +17,19 @@
         <div class="dropdown-item" onclick="showTool('welcome')">Home</div>
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" onclick="showTool('about-t3ps')">About T3PS</div>
-        <div class="dropdown-item" onclick="showTool('global-qm-survey')">Global QM vs Survey</div>
+        <div class="dropdown-item has-submenu">
+          Global QM vs Survey ▶
+          <div class="submenu">
+            <div class="dropdown-item" onclick="showTool('global-qm-survey')">All Plots</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="showTool('global-ag-qm')">α-γ QM CMAP</div>
+            <div class="dropdown-item" onclick="showTool('global-ag-survey')">α-γ Survey</div>
+            <div class="dropdown-item" onclick="showTool('global-ez-qm')">ε-ζ QM CMAP</div>
+            <div class="dropdown-item" onclick="showTool('global-ez-survey')">ε-ζ Survey</div>
+            <div class="dropdown-item" onclick="showTool('global-za-qm')">ζ-α QM CMAP</div>
+            <div class="dropdown-item" onclick="showTool('global-za-survey')">ζ-α Survey</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -25,16 +37,13 @@
       Tools ▼
       <div class="dropdown">
         <div class="dropdown-item" onclick="showTool('xyz-reader')">XYZ Reader</div>
-        <div class="dropdown-item" onclick="showTool('grid-viewer')">Grid Viewer</div>
       </div>
     </div>
 
     <div class="menu-item" id="menu-help">
       Help ▼
       <div class="dropdown">
-        <div class="dropdown-item">Documentation</div>
-        <div class="dropdown-divider"></div>
-        <div class="dropdown-item" onclick="window.open('https://github.com', '_blank')">GitHub</div>
+        <div class="dropdown-item" onclick="window.open('https://github.com/MingtianZ/cmap.pages', '_blank')">GitHub</div>
       </div>
     </div>
   </nav>
@@ -43,21 +52,76 @@
   <main id="main-content">
     <!-- Welcome page -->
     <div id="welcome" class="tool-panel tool-layout-centered tool-theme-welcome active">
-      <h1>Molecular Tools</h1>
-      <p>Select a tool from the menu above to get started</p>
+      <h1>T3PS Molecular Conformational Analysis Tools</h1>
+      <p style="font-size: 16px; color: #4b5563; margin-bottom: 40px;">Explore DNA phosphodiester backbone conformations through QM calculations and PDB surveys</p>
+
+      <div class="feature-grid">
+        <div class="feature-card" onclick="showTool('about-t3ps')">
+          <div class="feature-icon">📖</div>
+          <h3>About T3PS</h3>
+          <p>Learn about the T3PS model compound and its role in understanding DNA backbone structure</p>
+        </div>
+
+        <div class="feature-card" onclick="showTool('global-qm-survey')">
+          <div class="feature-icon">🗺️</div>
+          <h3>Global Energy Surfaces</h3>
+          <p>Compare QM energy maps with PDB survey distributions across all three dihedral angle pairs</p>
+        </div>
+
+        <div class="feature-card" onclick="showTool('xyz-reader')">
+          <div class="feature-icon">🧬</div>
+          <h3>XYZ Structure Viewer</h3>
+          <p>Load and visualize molecular structures, measure dihedral angles interactively</p>
+        </div>
+
+        <div class="feature-card" onclick="showTool('global-ag-qm')">
+          <div class="feature-icon">🔬</div>
+          <h3>Interactive QM: α-γ</h3>
+          <p>Click on α-γ energy surface to view 3D structures and measure dihedral angles</p>
+        </div>
+
+        <div class="feature-card" onclick="showTool('global-ez-qm')">
+          <div class="feature-icon">🔬</div>
+          <h3>Interactive QM: ε-ζ</h3>
+          <p>Click on ε-ζ energy surface to view 3D structures and measure dihedral angles</p>
+        </div>
+
+        <div class="feature-card" onclick="showTool('global-za-qm')">
+          <div class="feature-icon">🔬</div>
+          <h3>Interactive QM: ζ-α</h3>
+          <p>Click on ζ-α energy surface to view 3D structures and measure dihedral angles</p>
+        </div>
+      </div>
     </div>
 
     <!-- About T3PS -->
     <div id="about-t3ps" class="tool-panel"></div>
 
-    <!-- Global QM vs Survey -->
+    <!-- Global QM vs Survey (All plots) -->
     <div id="global-qm-survey" class="tool-panel"></div>
+
+    <!-- Global single plots -->
+    <div id="global-ag-qm" class="tool-panel"
+         data-plot-type="qm" data-angle1="a" data-angle2="g"
+         data-plot-title="QM: α-γ CMAP"></div>
+    <div id="global-ag-survey" class="tool-panel"
+         data-plot-type="survey" data-angle1="a" data-angle2="g"
+         data-plot-title="PDB Survey: α-γ"></div>
+    <div id="global-ez-qm" class="tool-panel"
+         data-plot-type="qm" data-angle1="e" data-angle2="z"
+         data-plot-title="QM: ε-ζ CMAP"></div>
+    <div id="global-ez-survey" class="tool-panel"
+         data-plot-type="survey" data-angle1="e" data-angle2="z"
+         data-plot-title="PDB Survey: ε-ζ"></div>
+    <div id="global-za-qm" class="tool-panel"
+         data-plot-type="qm" data-angle1="z" data-angle2="a"
+         data-plot-title="QM: ζ-α CMAP (intra-residue)"></div>
+    <div id="global-za-survey" class="tool-panel"
+         data-plot-type="survey" data-angle1="z" data-angle2="a"
+         data-plot-title="PDB Survey: ζ-α (cross-residue)"></div>
 
     <!-- XYZ Reader (dynamically loaded) -->
     <div id="xyz-reader" class="tool-panel tool-layout-flex"></div>
-
-    <!-- Grid Viewer (dynamically loaded) -->
-    <div id="grid-viewer" class="tool-panel"></div>
   </main>
 
   <!-- Main application script -->

@@ -72,6 +72,33 @@ body {
   margin: 4px 0;
 }
 
+/* Submenu (nested dropdown) */
+.has-submenu {
+  position: relative;
+}
+
+.submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 180px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  z-index: 1001;
+}
+
+.has-submenu:hover .submenu {
+  display: block;
+}
+
+.has-submenu:hover {
+  background: #f5f5f5;
+}
+
 /* Main content area */
 #main-content {
   height: calc(100vh - 40px);
@@ -117,6 +144,64 @@ body {
   font-size: 18px;
   opacity: 0.9;
   margin: 0;
+}
+
+/* Feature grid on welcome page */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 900px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.feature-card h3 {
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.feature-card p {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 1;
 }
 
 /* Common button styles */
@@ -328,6 +413,70 @@ button:hover {
   text-decoration: underline;
 }
 
+/* Dihedral angle tables */
+.about-section h4 {
+  font-size: 18px;
+  color: #4b5563;
+  margin: 24px 0 12px 0;
+  font-weight: 600;
+}
+
+.dihedral-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 24px 0;
+  font-size: 13px;
+}
+
+.dihedral-table thead {
+  background: #f3f4f6;
+}
+
+.dihedral-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #d1d5db;
+}
+
+.dihedral-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.dihedral-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.dihedral-table td:nth-child(1) {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dihedral-table td:nth-child(3) {
+  font-family: 'Courier New', monospace;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.dihedral-table td:nth-child(4) {
+  font-family: 'Courier New', monospace;
+  color: #059669;
+}
+
+.note {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #92400e;
+}
+
 /* Global QM vs Survey page */
 .qm-survey-container {
   height: 100%;
@@ -355,6 +504,7 @@ button:hover {
 }
 
 .loading-overlay {
+  display: block;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -400,4 +550,61 @@ button:hover {
 .plot {
   width: 100%;
   height: 400px;
+}
+
+/* Single plot container (for larger individual plots) */
+.single-plot-container {
+  height: 100%;
+  overflow: hidden;
+  padding: 10px;
+  background: #f9fafb;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.single-plot-wrapper {
+  width: calc(50vw - 20px);
+  height: calc(100vh - 80px);
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.xyz-viewer-panel {
+  width: calc(50vw - 20px);
+  height: calc(100vh - 80px);
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.xyz-viewer-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.xyz-viewer-panel .viewer-container {
+  flex: 1;
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xyz-viewer-panel .loading-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #6b7280;
+  font-size: 14px;
 }

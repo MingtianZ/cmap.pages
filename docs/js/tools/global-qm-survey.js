@@ -5,7 +5,7 @@ export function getHTML() {
   return `
     <div class="qm-survey-container">
       <div class="qm-survey-header">
-        <h2>T3PS4 QM Energy Surfaces vs PDB Survey Distributions</h2>
+        <h2>T3PS Global Energy Surfaces vs Nucleic Acid Survey Distributions</h2>
         <p class="subtitle">Comparing quantum mechanical energy calculations with experimental PDB survey data</p>
       </div>
 
@@ -46,6 +46,21 @@ export function getHTML() {
 export async function init() {
   console.log('Global QM vs Survey initialized');
 
+  // Check if Plotly is available
+  if (typeof Plotly === 'undefined') {
+    console.error('Plotly.js is not loaded!');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.innerHTML = `
+        <div style="color: red;">
+          <h3>Error</h3>
+          <p>Plotly.js library is not loaded. Please refresh the page.</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
   // Load data and create plots
   await loadDataAndPlot();
 }
@@ -62,6 +77,12 @@ async function loadDataAndPlot() {
       loadCSV('assets/global_za_qm.csv')
     ]);
 
+    console.log('QM data loaded:', {
+      agQM: agQM.length,
+      ezQM: ezQM.length,
+      zaQM: zaQM.length
+    });
+
     console.log('Loading survey histogram data...');
     const [agSurvey, ezSurvey, zaSurvey] = await Promise.all([
       loadJSON('assets/survey_ag_hist.json'),
@@ -69,8 +90,16 @@ async function loadDataAndPlot() {
       loadJSON('assets/survey_za_hist.json')
     ]);
 
+    console.log('Survey data loaded:', {
+      agSurvey: agSurvey.histogram?.length || 0,
+      ezSurvey: ezSurvey.histogram?.length || 0,
+      zaSurvey: zaSurvey.histogram?.length || 0
+    });
+
     // Hide loading overlay
-    loadingOverlay.style.display = 'none';
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
 
     // Create all plots
     console.log('Creating plots...');
@@ -93,21 +122,35 @@ async function loadDataAndPlot() {
 
   } catch (error) {
     console.error('Error loading data:', error);
-    loadingOverlay.innerHTML = `
-      <div style="color: red;">
-        <h3>Error Loading Data</h3>
-        <p>${error.message}</p>
-      </div>
-    `;
+    if (loadingOverlay) {
+      loadingOverlay.innerHTML = `
+        <div style="color: red; max-width: 500px;">
+          <h3>Error Loading Data</h3>
+          <p><strong>Message:</strong> ${error.message}</p>
+          <p><strong>Stack:</strong></p>
+          <pre style="text-align: left; font-size: 11px; overflow-x: auto;">${error.stack || 'No stack trace'}</pre>
+          <p style="margin-top: 20px; font-size: 12px;">
+            Please check the browser console (F12) for more details.
+          </p>
+        </div>
+      `;
+    }
   }
 }
 
 async function loadCSV(url) {
+  console.log(`Fetching CSV: ${url}`);
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to load ${url}`);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+  }
   const text = await response.text();
 
   const lines = text.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error(`CSV file ${url} appears to be empty or invalid`);
+  }
+
   const headers = lines[0].split(',');
   const data = [];
 
@@ -120,45 +163,81 @@ async function loadCSV(url) {
     data.push(row);
   }
 
+  console.log(`Loaded ${data.length} rows from ${url}`);
   return data;
 }
 
 async function loadJSON(url) {
+  console.log(`Fetching JSON: ${url}`);
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to load ${url}`);
-  return await response.json();
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+  }
+  const json = await response.json();
+  console.log(`Loaded JSON from ${url}`);
+  return json;
 }
 
 function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, vmax) {
-  // Extract data points
+  console.log(`Creating QM plot: ${title}, data points: ${data.length}, vmax: ${vmax}`);
+
+  // Extract data points - use scatter data for better interpolation
   const angle1 = data.map(d => d[angle1Key]);
   const angle2 = data.map(d => d[angle2Key]);
   const energies = data.map(d => d.energy_rel);
 
-  // Create grid for interpolation (simple gridding)
-  const gridSize = 72;
-  const grid = createGrid(angle1, angle2, energies, gridSize);
+  // Add periodic boundary points for smooth wrapping
+  const angle1Ext = [...angle1];
+  const angle2Ext = [...angle2];
+  const energiesExt = [...energies];
+
+  for (let i = 0; i < data.length; i++) {
+    const a1 = angle1[i];
+    const a2 = angle2[i];
+    const e = energies[i];
+
+    // Add points at boundaries
+    if (a1 <= 30) {
+      angle1Ext.push(a1 + 360);
+      angle2Ext.push(a2);
+      energiesExt.push(e);
+    }
+    if (a1 >= 330) {
+      angle1Ext.push(a1 - 360);
+      angle2Ext.push(a2);
+      energiesExt.push(e);
+    }
+    if (a2 <= 30) {
+      angle1Ext.push(a1);
+      angle2Ext.push(a2 + 360);
+      energiesExt.push(e);
+    }
+    if (a2 >= 330) {
+      angle1Ext.push(a1);
+      angle2Ext.push(a2 - 360);
+      energiesExt.push(e);
+    }
+  }
+
+  // Map angle keys to Greek symbols for hover text
+  const angle1Name = angle1Key === 'alpha' ? 'α' : (angle1Key === 'epsilon' ? 'ε' : 'ζ');
+  const angle2Name = angle2Key === 'gamma' ? 'γ' : (angle2Key === 'zeta' ? 'ζ' : 'α');
 
   // Jet colorscale for QM (dark red -> yellow -> cyan -> dark blue)
-  const qmColorscale = [
-    [0.0, '#8B0000'],  // Dark red
-    [0.1, '#DC143C'],  // Crimson
-    [0.2, '#FF4500'],  // Orange red
-    [0.3, '#FFA500'],  // Orange
-    [0.4, '#FFD700'],  // Gold
-    [0.5, '#FFFF00'],  // Yellow
-    [0.6, '#00FF00'],  // Green
-    [0.7, '#00FFFF'],  // Cyan
-    [0.8, '#1E90FF'],  // Dodger blue
-    [0.9, '#0000CD'],  // Medium blue
-    [1.0, '#00008B']   // Dark blue
+  // Exactly matches Python's colors_list_qm with 20 colors evenly spaced
+  const qmColors = [
+    '#8B0000', '#B22222', '#DC143C', '#FF0000', '#FF4500',
+    '#FF6347', '#FF8C00', '#FFA500', '#FFD700', '#FFFF00',
+    '#ADFF2F', '#00FF00', '#00FF7F', '#00FFFF', '#00CED1',
+    '#00BFFF', '#1E90FF', '#0000FF', '#0000CD', '#00008B'
   ];
+  const qmColorscale = qmColors.map((color, i) => [i / 19, color]);
 
   const trace = {
     type: 'contour',
-    x: grid.x,
-    y: grid.y,
-    z: grid.z,
+    x: angle1Ext,
+    y: angle2Ext,
+    z: energiesExt,
     colorscale: qmColorscale,
     contours: {
       start: 0,
@@ -181,7 +260,13 @@ function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, 
       color: 'white',
       smoothing: 0.85
     },
-    showscale: true
+    showscale: true,
+    // Enable automatic Delaunay triangulation and interpolation
+    ncontours: 30,
+    connectgaps: true,
+    // Use more grid points for smoother interpolation
+    autocontour: false,
+    hovertemplate: `${angle1Name}: %{x:.0f}°<br>${angle2Name}: %{y:.0f}°<br>ΔE: %{z:.3f} kcal/mol<extra></extra>`
   };
 
   const layout = {
@@ -194,7 +279,10 @@ function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, 
       range: [0, 360],
       dtick: 60,
       gridcolor: 'rgba(128, 128, 128, 0.3)',
-      gridwidth: 0.3
+      gridwidth: 0.3,
+      constrain: 'domain',
+      autorange: false,
+      fixedrange: false
     },
     yaxis: {
       title: ylabel,
@@ -203,7 +291,10 @@ function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, 
       gridcolor: 'rgba(128, 128, 128, 0.3)',
       gridwidth: 0.3,
       scaleanchor: 'x',
-      scaleratio: 1
+      scaleratio: 1,
+      constrain: 'domain',
+      autorange: false,
+      fixedrange: false
     },
     plot_bgcolor: '#00008B',
     paper_bgcolor: 'white',
@@ -218,36 +309,66 @@ function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, 
   };
 
   Plotly.newPlot(divId, [trace], layout, config);
+  console.log(`QM plot created successfully: ${divId}`);
 }
 
 function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
+  console.log(`Creating Survey plot: ${title}`);
+
+  // Extract angle symbols from labels for hover text
+  const angle1Name = xlabel.split(' ')[0];  // 'α (degrees)' -> 'α'
+  const angle2Name = ylabel.split(' ')[0];  // 'γ (degrees)' -> 'γ'
+
   // Survey colorscale (reversed from QM: dark blue -> cyan -> yellow -> dark red)
-  const surveyColorscale = [
-    [0.0, '#00008B'],  // Dark blue (low density)
-    [0.1, '#0000CD'],  // Medium blue
-    [0.2, '#1E90FF'],  // Dodger blue
-    [0.3, '#00FFFF'],  // Cyan
-    [0.4, '#00FF7F'],  // Spring green
-    [0.5, '#ADFF2F'],  // Green yellow
-    [0.6, '#FFFF00'],  // Yellow
-    [0.7, '#FFD700'],  // Gold
-    [0.8, '#FF8C00'],  // Dark orange
-    [0.9, '#DC143C'],  // Crimson
-    [1.0, '#8B0000']   // Dark red (high density)
+  // Exactly matches Python's colors_list with 20 colors evenly spaced
+  const surveyColors = [
+    '#00008B', '#0000FF', '#4169E1', '#00BFFF', '#00CED1',
+    '#00FFFF', '#00FF7F', '#00FF00', '#7FFF00', '#ADFF2F',
+    '#FFFF00', '#FFD700', '#FFA500', '#FF8C00', '#FF6347',
+    '#FF4500', '#FF0000', '#DC143C', '#B22222', '#8B0000'
   ];
+  const surveyColorscale = surveyColors.map((color, i) => [i / 19, color]);
+
+  // Transpose histogram (numpy.histogram2d returns (nx, ny) but contourf needs (ny, nx))
+  const histTransposed = transpose2D(histData.histogram);
+
+  // Calculate vmax in original space first (matching Python)
+  const histPlusOne = histTransposed.map(row => row.map(val => val + 1));
+
+  // Find max value more efficiently (avoid spreading huge arrays)
+  let maxValOriginal = 0;
+  for (const row of histPlusOne) {
+    const rowMax = Math.max(...row);
+    if (rowMax > maxValOriginal) maxValOriginal = rowMax;
+  }
+
+  const vmaxOriginal = maxValOriginal * 0.5;  // Python: vmax = np.max(hist_plot) * 0.5
+  const vmax = Math.log10(vmaxOriginal);       // Convert to log space
+
+  console.log(`Survey plot: maxOriginal=${maxValOriginal}, vmaxOriginal=${vmaxOriginal}, vmax(log)=${vmax}`);
+
+  // Apply log transform to histogram data (add 1 to avoid log(0))
+  const histLog = histTransposed.map(row =>
+    row.map(val => Math.log10(val + 1))
+  );
+
+  const nlevels = 20;  // Number of contour levels (matching Python)
 
   const trace = {
     type: 'contour',
     x: histData.x_edges,
     y: histData.y_edges,
-    z: histData.histogram,
+    z: histLog,
     colorscale: surveyColorscale,
     contours: {
       coloring: 'heatmap',
-      showlabels: false
+      showlabels: false,
+      start: 0,
+      end: vmax,
+      size: vmax / nlevels
     },
     colorbar: {
-      title: 'Density',
+      title: 'Log Density',
       titleside: 'right'
     },
     line: {
@@ -258,7 +379,8 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
     showscale: true,
     zauto: false,
     zmin: 0,
-    zmax: Math.max(...histData.histogram.flat()) * 0.5
+    zmax: vmax,
+    hovertemplate: `${angle1Name}: %{x:.0f}°<br>${angle2Name}: %{y:.0f}°<br>LD: %{z:.3f}<extra></extra>`
   };
 
   const layout = {
@@ -271,7 +393,10 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
       range: [0, 360],
       dtick: 60,
       gridcolor: 'rgba(255, 255, 255, 0.2)',
-      gridwidth: 0.3
+      gridwidth: 0.3,
+      constrain: 'domain',
+      autorange: false,
+      fixedrange: false
     },
     yaxis: {
       title: ylabel,
@@ -280,7 +405,10 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
       gridcolor: 'rgba(255, 255, 255, 0.2)',
       gridwidth: 0.3,
       scaleanchor: 'x',
-      scaleratio: 1
+      scaleratio: 1,
+      constrain: 'domain',
+      autorange: false,
+      fixedrange: false
     },
     plot_bgcolor: '#00008B',
     paper_bgcolor: 'white',
@@ -295,71 +423,20 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
   };
 
   Plotly.newPlot(divId, [trace], layout, config);
+  console.log(`Survey plot created successfully: ${divId}`);
 }
 
-function createGrid(x, y, z, size) {
-  // Create a regular grid from scattered data
-  const grid = {
-    x: [],
-    y: [],
-    z: []
-  };
+// Utility function to transpose a 2D array
+function transpose2D(matrix) {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const transposed = Array(cols).fill(0).map(() => Array(rows).fill(0));
 
-  // Create grid axes
-  for (let i = 0; i < size; i++) {
-    grid.x.push(i * 360 / (size - 1));
-    grid.y.push(i * 360 / (size - 1));
-  }
-
-  // Initialize grid
-  const gridZ = Array(size).fill(0).map(() => Array(size).fill(0));
-  const counts = Array(size).fill(0).map(() => Array(size).fill(0));
-
-  // Bin data points into grid
-  for (let i = 0; i < x.length; i++) {
-    const xi = Math.floor(x[i] / 360 * (size - 1));
-    const yi = Math.floor(y[i] / 360 * (size - 1));
-
-    if (xi >= 0 && xi < size && yi >= 0 && yi < size) {
-      gridZ[yi][xi] += z[i];
-      counts[yi][xi] += 1;
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      transposed[j][i] = matrix[i][j];
     }
   }
 
-  // Average values in each bin
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      if (counts[i][j] > 0) {
-        gridZ[i][j] /= counts[i][j];
-      }
-    }
-  }
-
-  // Fill empty cells with nearest neighbor
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      if (counts[i][j] === 0) {
-        // Find nearest non-zero neighbor
-        let minDist = Infinity;
-        let nearestValue = 0;
-
-        for (let ii = 0; ii < size; ii++) {
-          for (let jj = 0; jj < size; jj++) {
-            if (counts[ii][jj] > 0) {
-              const dist = Math.sqrt((i - ii) ** 2 + (j - jj) ** 2);
-              if (dist < minDist) {
-                minDist = dist;
-                nearestValue = gridZ[ii][jj];
-              }
-            }
-          }
-        }
-
-        gridZ[i][j] = nearestValue;
-      }
-    }
-  }
-
-  grid.z = gridZ;
-  return grid;
+  return transposed;
 }

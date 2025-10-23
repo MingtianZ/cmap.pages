@@ -12,12 +12,12 @@ export function getHTML() {
 
     <div id="viewer" aria-label="3Dmol viewer">
       <div id="measurePanel">
-        <h3>Dihedral Angle Measurement</h3>
-        <p style="color: #666; margin: 0 0 8px 0;">Click 4 atoms to measure dihedral angle</p>
+        <h3>Geometry Measurement</h3>
+        <p style="color: #666; margin: 0 0 8px 0;">Click atoms: 2=distance, 3=angle, 4=dihedral</p>
         <div class="atom-list" id="atomList">
           <p style="color: #999; margin: 8px 0;">No atoms selected</p>
         </div>
-        <div id="dihedralResult"></div>
+        <div id="measurementResult"></div>
         <button class="clear-btn" id="clearBtn">Clear Selection</button>
       </div>
     </div>
@@ -35,7 +35,7 @@ export function init() {
   // Update measurement panel
   function updateMeasurePanel(data) {
     const atomList = document.getElementById('atomList');
-    const dihedralResult = document.getElementById('dihedralResult');
+    const measurementResult = document.getElementById('measurementResult');
     const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
 
     if (data.count === 0) {
@@ -52,8 +52,26 @@ export function init() {
       `).join('');
     }
 
-    if (data.dihedral) {
-      dihedralResult.innerHTML = `
+    // Display measurement result based on number of selected atoms
+    if (data.distance) {
+      measurementResult.innerHTML = `
+        <div class="dihedral-result">
+          <div style="margin-bottom: 4px;">Distance:</div>
+          <strong>${data.distance.angstroms.toFixed(4)} Å</strong>
+        </div>
+      `;
+    } else if (data.angle) {
+      measurementResult.innerHTML = `
+        <div class="dihedral-result">
+          <div style="margin-bottom: 4px;">Angle:</div>
+          <strong>${data.angle.degrees.toFixed(2)}°</strong>
+          <div style="color: #666; font-size: 11px; margin-top: 4px;">
+            ${data.angle.radians.toFixed(4)} rad
+          </div>
+        </div>
+      `;
+    } else if (data.dihedral) {
+      measurementResult.innerHTML = `
         <div class="dihedral-result">
           <div style="margin-bottom: 4px;">Dihedral Angle:</div>
           <strong>${data.dihedral.degrees.toFixed(2)}°</strong>
@@ -63,7 +81,7 @@ export function init() {
         </div>
       `;
     } else {
-      dihedralResult.innerHTML = '';
+      measurementResult.innerHTML = '';
     }
   }
 

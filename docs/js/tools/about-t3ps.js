@@ -41,6 +41,151 @@ export function getHTML() {
         </section>
 
         <section class="about-section">
+          <h3>Dihedral Angle Definitions</h3>
+          <p>
+            The T3PS model allows measurement of 15 dihedral angles: 5 backbone torsions,
+            5 pseudorotation angles for the 5' sugar ring, and 5 for the 3' sugar ring.
+          </p>
+
+          <h4>Backbone Dihedral Angles</h4>
+          <table class="dihedral-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Atom Indices</th>
+                <th>CHARMM Atom Names</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ε</strong></td>
+                <td>epsilon</td>
+                <td>4, 10, 12, 13</td>
+                <td>C4'1 – C3'1 – O3'1 – P</td>
+              </tr>
+              <tr>
+                <td><strong>ζ</strong></td>
+                <td>zeta</td>
+                <td>10, 12, 13, 16</td>
+                <td>C3'1 – O3'1 – P – O5'2</td>
+              </tr>
+              <tr>
+                <td><strong>α</strong></td>
+                <td>alpha</td>
+                <td>12, 13, 16, 17</td>
+                <td>O3'1 – P – O5'2 – C5'2</td>
+              </tr>
+              <tr>
+                <td><strong>β</strong></td>
+                <td>beta</td>
+                <td>13, 16, 17, 20</td>
+                <td>P – O5'2 – C5'2 – C4'2</td>
+              </tr>
+              <tr>
+                <td><strong>γ</strong></td>
+                <td>gamma</td>
+                <td>16, 17, 20, 29</td>
+                <td>O5'2 – C5'2 – C4'2 – C3'2</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Sugar 1 Pseudorotation Angles (5' Ring)</h4>
+          <table class="dihedral-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Atom Indices</th>
+                <th>CHARMM Atom Names</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ν<sub>0</sub></strong></td>
+                <td>nu0</td>
+                <td>4, 0, 1, 7</td>
+                <td>C4'1 – O4'1 – C1'1 – C2'1</td>
+              </tr>
+              <tr>
+                <td><strong>ν<sub>1</sub></strong></td>
+                <td>nu1</td>
+                <td>0, 1, 7, 10</td>
+                <td>O4'1 – C1'1 – C2'1 – C3'1</td>
+              </tr>
+              <tr>
+                <td><strong>ν<sub>2</sub></strong></td>
+                <td>nu2</td>
+                <td>1, 7, 10, 4</td>
+                <td>C1'1 – C2'1 – C3'1 – C4'1</td>
+              </tr>
+              <tr>
+                <td><strong>ν<sub>3</sub></strong></td>
+                <td>nu3</td>
+                <td>7, 10, 4, 0</td>
+                <td>C2'1 – C3'1 – C4'1 – O4'1</td>
+              </tr>
+              <tr>
+                <td><strong>ν<sub>4</sub></strong></td>
+                <td>nu4</td>
+                <td>10, 4, 0, 1</td>
+                <td>C3'1 – C4'1 – O4'1 – C1'1</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Sugar 2 Pseudorotation Angles (3' Ring)</h4>
+          <table class="dihedral-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Atom Indices</th>
+                <th>CHARMM Atom Names</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>μ<sub>0</sub></strong></td>
+                <td>mu0</td>
+                <td>20, 22, 23, 26</td>
+                <td>C4'2 – O4'2 – C1'2 – C2'2</td>
+              </tr>
+              <tr>
+                <td><strong>μ<sub>1</sub></strong></td>
+                <td>mu1</td>
+                <td>22, 23, 26, 29</td>
+                <td>O4'2 – C1'2 – C2'2 – C3'2</td>
+              </tr>
+              <tr>
+                <td><strong>μ<sub>2</sub></strong></td>
+                <td>mu2</td>
+                <td>23, 26, 29, 20</td>
+                <td>C1'2 – C2'2 – C3'2 – C4'2</td>
+              </tr>
+              <tr>
+                <td><strong>μ<sub>3</sub></strong></td>
+                <td>mu3</td>
+                <td>26, 29, 20, 22</td>
+                <td>C2'2 – C3'2 – C4'2 – O4'2</td>
+              </tr>
+              <tr>
+                <td><strong>μ<sub>4</sub></strong></td>
+                <td>mu4</td>
+                <td>29, 20, 22, 23</td>
+                <td>C3'2 – C4'2 – O4'2 – C1'2</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="note">
+            <strong>Note:</strong> Atom indices are 0-based as used by 3Dmol.js. Use the XYZ Structure Viewer
+            tool to interactively select and measure any of these dihedral angles.
+          </p>
+        </section>
+
+        <section class="about-section">
           <h3>Methodology</h3>
           <p>
             <strong>Quantum Mechanical Calculations:</strong> Ab initio QM calculations at the
