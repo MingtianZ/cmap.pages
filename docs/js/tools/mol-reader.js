@@ -327,13 +327,16 @@ export function init() {
         viewer.viewer.setStyle({hetflag: true}, {stick: {}, sphere: {scale: 0.3}});
         break;
       case 'ribbon':
-        baseStyle = {ribbon: {color: 'spectrum'}};
-        viewer.viewer.setStyle({}, baseStyle);
+        // Ribbon uses cartoon style with ribbon parameter and no arrows
+        baseStyle = {cartoon: {color: 'spectrum', ribbon: true, arrows: false, thickness: 0.4}};
+        viewer.viewer.setStyle({hetflag: false}, baseStyle);
         viewer.viewer.setStyle({hetflag: true}, {stick: {}, sphere: {scale: 0.3}});
         break;
       case 'trace':
-        baseStyle = {line: {color: 'spectrum'}};
-        viewer.viewer.setStyle({}, baseStyle);
+        // Trace should use cartoon style with trace variant
+        baseStyle = {cartoon: {style: 'trace', color: 'spectrum', thickness: 0.5}};
+        viewer.viewer.setStyle({hetflag: false}, baseStyle);
+        viewer.viewer.setStyle({hetflag: true}, {stick: {}, sphere: {scale: 0.3}});
         break;
       case 'stick':
         baseStyle = {stick: {}};
