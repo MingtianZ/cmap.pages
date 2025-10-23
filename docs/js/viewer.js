@@ -47,12 +47,12 @@ export class XYZViewer {
   _enableAtomClick() {
     if (!this.model) return;
     const self = this;
-    const atoms = this.model.selectedAtoms({});
-    atoms.forEach(atom => {
-      self.viewer.setClickable({serial: atom.serial}, true, function(clickedAtom) {
-        self._handleAtomClick(clickedAtom);
-      });
+
+    // Set clickable for ALL atoms at once (much faster than per-atom)
+    this.viewer.setClickable({}, true, function(clickedAtom) {
+      self._handleAtomClick(clickedAtom);
     });
+
     // IMPORTANT: Must render after setting clickable handlers
     this.viewer.render();
   }
