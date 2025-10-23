@@ -16,23 +16,15 @@ export class XYZViewer {
     this.onSelectionChange = onSelectionChange; // Selection change callback
   }
 
-  /** Load XYZ text */
-  loadText(text) {
+  /** Low-level: load model with any 3Dmol-supported format */
+  loadModel(text, format = 'xyz') {
     this.viewer.removeAllModels();
     this.selectedAtoms = [];
-    this.model = this.viewer.addModel(text, 'xyz'); // Auto bond detection
+    this.model = this.viewer.addModel(text, format);
     this.viewer.setStyle({}, this.style);
-    this._enableAtomClick(); // Enable atom clicking
+    this._enableAtomClick();
     this.fit();
     this._notifyChange();
-  }
-
-  /** Fetch text from URL (same-origin or CORS allowed) and load */
-  async loadURL(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const text = await res.text();
-    this.loadText(text);
   }
 
   /** Enable atom click selection */
@@ -227,6 +219,7 @@ export class XYZViewer {
       this._updateAtomStyles(); // Maintain selection state
     }
   }
+
 
   /** Clear scene */
   clear() {

@@ -627,7 +627,7 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
       const xyzData = await response.text();
 
       // Load into viewer (this will clear previous model)
-      viewer.loadText(xyzData);
+      viewer.loadModel(xyzData, 'xyz');
 
       // Hide loading message
       loadingMsg.style.display = 'none';

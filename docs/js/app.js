@@ -1,5 +1,6 @@
 // Main application logic
 import * as XYZReader from './tools/xyz-reader.js';
+import * as MolReader from './tools/mol-reader.js';
 import * as AboutT3PS from './tools/about-t3ps.js';
 import * as GlobalQMSurvey from './tools/global-qm-survey.js';
 import * as GlobalSingle from './tools/global-single.js';
@@ -7,6 +8,7 @@ import * as GlobalSingle from './tools/global-single.js';
 // Tool registry
 const tools = {
   'xyz-reader': XYZReader,
+  'mol-reader': MolReader,
   'about-t3ps': AboutT3PS,
   'global-qm-survey': GlobalQMSurvey,
   'global-ag-qm': GlobalSingle,

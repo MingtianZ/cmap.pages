@@ -85,11 +85,22 @@ export function init() {
     }
   }
 
+  // Helper: load XYZ text
+  function loadXYZ(text) {
+    viewer.loadModel(text, 'xyz');
+  }
+
   // Load from URL parameter
   const params = new URLSearchParams(location.search);
   const url = params.get('file');
   if (url) {
-    viewer.loadURL(url).catch(err => alert('Load failed: ' + err));
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res.text();
+      })
+      .then(text => loadXYZ(text))
+      .catch(err => alert('Load failed: ' + err));
   }
 
   // Local file selection
@@ -98,7 +109,7 @@ export function init() {
     const f = e.target.files?.[0];
     if (!f) return;
     const text = await f.text();
-    viewer.loadText(text);
+    loadXYZ(text);
   });
 
   // Drag and drop loading
@@ -132,7 +143,7 @@ export function init() {
     const f = e.dataTransfer?.files?.[0];
     if (!f) return;
     const text = await f.text();
-    viewer.loadText(text);
+    loadXYZ(text);
   });
 
   // Fit button

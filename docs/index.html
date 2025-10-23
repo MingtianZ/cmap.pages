@@ -11,6 +11,9 @@
 <body>
   <!-- Menu bar -->
   <nav class="menubar">
+    <div class="menu-item" id="menu-home" onclick="showTool('welcome')" style="cursor: pointer; font-size: 20px;" title="Home">
+      🏠
+    </div>
     <div class="menu-item" id="menu-t3ps">
       T3PS ▼
       <div class="dropdown">
@@ -36,7 +39,9 @@
     <div class="menu-item" id="menu-tools">
       Tools ▼
       <div class="dropdown">
-        <div class="dropdown-item" onclick="showTool('xyz-reader')">XYZ Reader</div>
+        <div class="dropdown-item" onclick="showTool('mol-reader')">Molecule Reader</div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" onclick="showTool('xyz-reader')">XYZ Reader (Legacy)</div>
       </div>
     </div>
 
@@ -62,10 +67,10 @@
           <p>Learn about the T3PS model compound and its role in understanding DNA backbone structure</p>
         </div>
 
-        <div class="feature-card" onclick="showTool('global-qm-survey')">
-          <div class="feature-icon">🗺️</div>
-          <h3>Global Energy Surfaces</h3>
-          <p>Compare QM energy maps with PDB survey distributions across all three dihedral angle pairs</p>
+        <div class="feature-card" onclick="showTool('mol-reader')">
+          <div class="feature-icon">🧪</div>
+          <h3>Molecule Reader</h3>
+          <p>Load and visualize multiple molecular file formats (PDB, XYZ, MOL2, SDF, CIF) with interactive measurement tools</p>
         </div>
 
         <div class="feature-card" onclick="showTool('xyz-reader')">
@@ -119,6 +124,9 @@
     <div id="global-za-survey" class="tool-panel"
          data-plot-type="survey" data-angle1="z" data-angle2="a"
          data-plot-title="PDB Survey: ζ-α (cross-residue)"></div>
+
+    <!-- Molecule Reader (dynamically loaded) -->
+    <div id="mol-reader" class="tool-panel tool-layout-flex"></div>
 
     <!-- XYZ Reader (dynamically loaded) -->
     <div id="xyz-reader" class="tool-panel tool-layout-flex"></div>
