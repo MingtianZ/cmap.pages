@@ -41,6 +41,15 @@ export function getHTML() {
       <div id="measurePanel">
         <h3>Geometry Measurement</h3>
         <p style="color: #666; margin: 0 0 8px 0;">Click atoms: 2=distance, 3=angle, 4=dihedral</p>
+
+        <!-- Atom clicking status info -->
+        <div id="clickStatusInfo" style="margin-bottom: 8px; padding: 6px 10px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 4px; font-size: 11px; line-height: 1.4;">
+          <strong>⚠️ Atom Clicking:</strong> Only available in <strong>Stick</strong>, <strong>Ball-Stick</strong>, or <strong>Sphere</strong> styles.
+          <span style="display: block; margin-top: 4px; color: #92400e;">
+            First-time loading may take 5-10s for large molecules.
+          </span>
+        </div>
+
         <div id="formatInfo" style="margin-bottom: 8px; padding: 6px 10px; background: #f3f4f6; border-radius: 4px; font-size: 12px; display: none;">
           <strong>Format:</strong> <span id="formatName">-</span> |
           <strong>Atoms:</strong> <span id="atomCount">-</span>
@@ -145,6 +154,18 @@ export function init() {
       loadingMessage.textContent = `${fileInfo}${atomCount.toLocaleString()} atoms. Large molecules may take time. Don't close the page.`;
     } else {
       loadingMessage.textContent = 'Please don\'t close the page.';
+    }
+  }
+
+  // Reset loading overlay to a neutral message for the new file
+  function resetLoadingOverlay(filename) {
+    const titleEl = document.getElementById('loadingTitle');
+    const msgEl = document.getElementById('loadingMessage');
+    if (titleEl) titleEl.textContent = 'Loading molecule...';
+    if (msgEl) {
+      msgEl.textContent = filename
+        ? `Fetching ${filename}. Determining atom count...`
+        : 'Fetching file. Determining atom count...';
     }
   }
 
@@ -348,6 +369,46 @@ export function init() {
     // Re-apply selection highlight and render
     viewer._updateAtomStyles();
     viewer.viewer.render();
+
+    // Enable atom clicking for detailed styles (where measurement is useful)
+    const detailedStyles = ['stick', 'ball-stick', 'sphere'];
+    const clickStatusInfo = document.getElementById('clickStatusInfo');
+
+    if (detailedStyles.includes(styleName)) {
+      // Show loading message for atom click setup
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const loadingTitle = document.getElementById('loadingTitle');
+      const loadingMessage = document.getElementById('loadingMessage');
+
+      if (loadingOverlay && loadingTitle && loadingMessage) {
+        const atomCount = viewer.model ? viewer.model.selectedAtoms({}).length : 0;
+        loadingTitle.textContent = 'Enabling atom selection...';
+        loadingMessage.textContent = `Setting up click handlers for ${atomCount.toLocaleString()} atoms. Large molecules may take a few seconds.`;
+        loadingOverlay.style.display = 'block';
+
+        // Defer to let UI update before blocking operation
+        setTimeout(() => {
+          viewer._enableAtomClick();
+          loadingOverlay.style.display = 'none';
+
+          // Hide the warning once clicking is enabled
+          if (clickStatusInfo) {
+            clickStatusInfo.style.display = 'none';
+          }
+        }, 50);
+      } else {
+        // Fallback if overlay elements not found
+        viewer._enableAtomClick();
+        if (clickStatusInfo) {
+          clickStatusInfo.style.display = 'none';
+        }
+      }
+    } else {
+      // Show warning for non-detailed styles
+      if (clickStatusInfo) {
+        clickStatusInfo.style.display = 'block';
+      }
+    }
   }
 
   // Count unique models in mmCIF atom_site loop
@@ -398,8 +459,9 @@ export function init() {
     const loadingOverlay = document.getElementById('loadingOverlay');
 
     try {
-      // Show loading notification
+      // Show loading notification and reset to neutral message
       loadingOverlay.style.display = 'block';
+      resetLoadingOverlay(file?.name);
 
       // Validate file
       if (!file || !file.name) {
@@ -462,17 +524,21 @@ export function init() {
       // Defer rendering to let UI update
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Auto-apply style based on format and size
+      // Always use auto style when loading new files to avoid freezing on large molecules
       const styleSelect = document.getElementById('styleSelect');
-      if (styleSelect.value === 'auto') {
-        const autoStyle = getAutoStyle(format, text, atomCountValue);
-        applyStyleByName(viewer, autoStyle);
+      styleSelect.value = 'auto'; // Reset to auto
+      const finalStyle = getAutoStyle(format, text, atomCountValue);
+      applyStyleByName(viewer, finalStyle);
+
+      // Only hide loading overlay if not using detailed style
+      // (detailed styles will show their own loading for click setup)
+      const detailedStyles = ['stick', 'ball-stick', 'sphere'];
+      if (!detailedStyles.includes(finalStyle)) {
+        loadingOverlay.style.display = 'none';
       }
     } catch (error) {
       console.error('Error loading molecule:', error);
       alert(`Failed to load molecule: ${error.message}`);
-    } finally {
-      // Hide loading overlay
       loadingOverlay.style.display = 'none';
     }
   }
@@ -517,6 +583,7 @@ export function init() {
   if (url) {
     const loadingOverlay = document.getElementById('loadingOverlay');
     loadingOverlay.style.display = 'block';
+    resetLoadingOverlay(url.split('/').pop() || undefined);
 
     fetch(url)
       .then(res => res.text())
@@ -562,16 +629,24 @@ export function init() {
 
         // Defer rendering to let UI update
         setTimeout(() => {
+          // Always use auto style when loading new files
           const styleSelect = document.getElementById('styleSelect');
-          if (styleSelect.value === 'auto') {
-            applyStyleByName(viewer, getAutoStyle(format, text, atomCountValue));
+          styleSelect.value = 'auto';
+          const finalStyle = getAutoStyle(format, text, atomCountValue);
+          applyStyleByName(viewer, finalStyle);
+
+          // Fit view to center the molecule
+          viewer.fit();
+
+          // Only hide loading overlay if not using detailed style
+          const detailedStyles = ['stick', 'ball-stick', 'sphere'];
+          if (!detailedStyles.includes(finalStyle)) {
+            loadingOverlay.style.display = 'none';
           }
         }, 50);
       })
       .catch(err => {
         alert('Load failed: ' + err);
-      })
-      .finally(() => {
         loadingOverlay.style.display = 'none';
       });
   }
@@ -619,29 +694,43 @@ export function init() {
     rcsbBtn.disabled = true;
     rcsbBtn.textContent = 'Loading...';
     loadingOverlay.style.display = 'block';
+    resetLoadingOverlay(`${pdbId}.pdb`);
 
     try {
+      // Use PDB format with performance optimizations
       const url = `https://files.rcsb.org/download/${pdbId}.pdb`;
-      const response = await fetch(url);
 
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`PDB ${pdbId} not found (HTTP ${response.status})`);
       }
 
       const text = await response.text();
-      const format = 'pdb';
-      currentFormat = format;
+      currentFormat = 'pdb';
       currentFileName = `${pdbId}.pdb`;
 
-      // Count models
-      let modelCount = 1;
-      if (format === 'pdb') {
-        modelCount = (text.match(/^MODEL/gm) || []).length || 1;
-      }
+      // Extract first model if multi-model file
+      const modelCount = (text.match(/^MODEL/gm) || []).length || 1;
+      const filteredText = modelCount > 1 ? extractFirstModel(text, 'pdb') : text;
 
-      // Extract first model and load structure
-      const filteredText = extractFirstModel(text, format);
-      viewer.loadModel(filteredText, format);
+      // Performance parser options for large molecules
+      const parserOptions = {
+        doAssembly: false,                    // Don't build biological assembly
+        duplicateAssemblyAtoms: false,        // Don't duplicate symmetry atoms
+        noComputeSecondaryStructure: false,   // Need this for cartoon style
+        assignBonds: true                     // Assign bonds for PDB
+      };
+
+      // Load with performance options
+      viewer.viewer.removeAllModels();
+      viewer.selectedAtoms = [];
+      viewer.model = viewer.viewer.addModel(filteredText, 'pdb', parserOptions);
+
+      // Count atoms (fast method using regex)
+      const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
+      const atomCountValue = atomMatches ? atomMatches.length : 0;
+
+      // Note: Atom clicking will be enabled on-demand when user switches to detailed styles
 
       // Update format info
       const formatInfo = document.getElementById('formatInfo');
@@ -650,15 +739,13 @@ export function init() {
 
       formatInfo.style.display = 'block';
 
+      // Show format with optimization indicator
       if (modelCount > 1) {
-        formatName.innerHTML = `${format.toUpperCase()} <span style="color: #f59e0b; font-weight: bold;" title="NMR ensemble with ${modelCount} models">(${modelCount} models, showing first)</span>`;
+        formatName.innerHTML = `PDB <span style="color: #10b981; font-size: 10px;">⚡optimized</span> <span style="color: #f59e0b; font-weight: bold;" title="NMR ensemble with ${modelCount} models">(${modelCount} models, showing first)</span>`;
       } else {
-        formatName.textContent = format.toUpperCase();
+        formatName.innerHTML = `PDB <span style="color: #10b981; font-size: 10px;">⚡optimized</span>`;
       }
 
-      // Count atoms (fast method using regex)
-      const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
-      const atomCountValue = atomMatches ? atomMatches.length : 0;
       atomCount.textContent = atomCountValue || 'Unknown';
 
       // Update loading message with atom count and filename
@@ -667,23 +754,31 @@ export function init() {
       // Defer rendering to let UI update
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Auto-apply style based on size
+      // Always use auto style when loading new files from RCSB
       const styleSelect = document.getElementById('styleSelect');
-      if (styleSelect.value === 'auto') {
-        const autoStyle = getAutoStyle(format, text, atomCountValue);
-        applyStyleByName(viewer, autoStyle);
-      }
+      styleSelect.value = 'auto';
+      const finalStyle = getAutoStyle('pdb', '', atomCountValue);
+      applyStyleByName(viewer, finalStyle);
+
+      // Fit view to center the molecule
+      viewer.fit();
 
       // Clear input after successful load
       pdbInput.value = '';
 
+      // Only hide loading overlay if not using detailed style
+      const detailedStyles = ['stick', 'ball-stick', 'sphere'];
+      if (!detailedStyles.includes(finalStyle)) {
+        loadingOverlay.style.display = 'none';
+      }
+
     } catch (error) {
       alert(`Failed to load PDB: ${error.message}`);
       console.error('RCSB load error:', error);
+      loadingOverlay.style.display = 'none';
     } finally {
       rcsbBtn.disabled = false;
       rcsbBtn.textContent = 'RCSB';
-      loadingOverlay.style.display = 'none';
     }
   });
 

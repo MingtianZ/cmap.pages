@@ -9,7 +9,13 @@ export class XYZViewer {
     if (!window.$3Dmol) {
       throw new Error('3Dmol.js not loaded: please include https://3Dmol.org/build/3Dmol-min.js first');
     }
-    this.viewer = $3Dmol.createViewer(elementId, { backgroundColor });
+    // Performance optimizations for 3Dmol.js
+    this.viewer = $3Dmol.createViewer(elementId, {
+      backgroundColor,
+      antialias: false,      // Disable antialiasing for better performance
+      cartoonQuality: 2,     // Lower quality (default 5) for faster rendering
+      disableFog: true       // Disable fog effect
+    });
     this.style = style;
     this.model = null;
     this.selectedAtoms = []; // Store selected atoms [{serial, elem, x, y, z}, ...]
@@ -17,12 +23,22 @@ export class XYZViewer {
   }
 
   /** Low-level: load model with any 3Dmol-supported format */
-  loadModel(text, format = 'xyz') {
+  loadModel(text, format = 'xyz', parserOptions = {}) {
     this.viewer.removeAllModels();
     this.selectedAtoms = [];
-    this.model = this.viewer.addModel(text, format);
+
+    // Default parser options for performance (can be overridden)
+    const defaultOptions = {
+      doAssembly: false,                    // Don't build biological assembly
+      duplicateAssemblyAtoms: false,        // Don't duplicate atoms for symmetry
+      noComputeSecondaryStructure: false,   // Compute secondary structure by default (needed for cartoon)
+      assignBonds: true                     // Assign bonds by default
+    };
+
+    const options = { ...defaultOptions, ...parserOptions };
+    this.model = this.viewer.addModel(text, format, options);
     this.viewer.setStyle({}, this.style);
-    this._enableAtomClick();
+    // Note: _enableAtomClick() is called on-demand by applyStyleByName() when needed
     this.fit();
     this._notifyChange();
   }
@@ -37,6 +53,8 @@ export class XYZViewer {
         self._handleAtomClick(clickedAtom);
       });
     });
+    // IMPORTANT: Must render after setting clickable handlers
+    this.viewer.render();
   }
 
   /** Handle atom click */

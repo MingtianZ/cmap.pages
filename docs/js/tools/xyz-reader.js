@@ -88,6 +88,8 @@ export function init() {
   // Helper: load XYZ text
   function loadXYZ(text) {
     viewer.loadModel(text, 'xyz');
+    // Enable clicking for dihedral measurement (XYZ files are always small)
+    viewer._enableAtomClick();
   }
 
   // Load from URL parameter

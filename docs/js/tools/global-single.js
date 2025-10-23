@@ -628,6 +628,8 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
 
       // Load into viewer (this will clear previous model)
       viewer.loadModel(xyzData, 'xyz');
+      // Enable clicking for dihedral measurement (T3PS structures are small ~60 atoms)
+      viewer._enableAtomClick();
 
       // Hide loading message
       loadingMsg.style.display = 'none';
