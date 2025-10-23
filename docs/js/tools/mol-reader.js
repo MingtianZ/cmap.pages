@@ -51,12 +51,6 @@ export function getHTML() {
         <p style="color: #666; margin: 0 0 8px 0;">Click atoms: 2=distance, 3=angle, 4=dihedral</p>
 
         <!-- Atom clicking status info -->
-        <div id="clickStatusInfo" style="margin-bottom: 8px; padding: 6px 10px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 4px; font-size: 11px; line-height: 1.4;">
-          <strong>⚠️ Atom Clicking:</strong> Only available in <strong>Stick</strong>, <strong>Ball-Stick</strong>, or <strong>Sphere</strong> styles.
-          <span style="display: block; margin-top: 4px; color: #92400e;">
-            First-time loading may take 5-10s for large molecules.
-          </span>
-        </div>
 
         <div id="formatInfo" style="margin-bottom: 8px; padding: 6px 10px; background: #f3f4f6; border-radius: 4px; font-size: 12px; display: none;">
           <strong>Format:</strong> <span id="formatName">-</span> |
@@ -403,7 +397,6 @@ export function init() {
 
     // Enable atom clicking for detailed styles (where measurement is useful)
     const detailedStyles = ['stick', 'ball-stick', 'sphere'];
-    const clickStatusInfo = document.getElementById('clickStatusInfo');
 
     if (detailedStyles.includes(styleName)) {
       // Show loading message for atom click setup
@@ -421,23 +414,10 @@ export function init() {
         setTimeout(() => {
           viewer._enableAtomClick();
           loadingOverlay.style.display = 'none';
-
-          // Hide the warning once clicking is enabled
-          if (clickStatusInfo) {
-            clickStatusInfo.style.display = 'none';
-          }
         }, 50);
       } else {
         // Fallback if overlay elements not found
         viewer._enableAtomClick();
-        if (clickStatusInfo) {
-          clickStatusInfo.style.display = 'none';
-        }
-      }
-    } else {
-      // Show warning for non-detailed styles
-      if (clickStatusInfo) {
-        clickStatusInfo.style.display = 'block';
       }
     }
   }
