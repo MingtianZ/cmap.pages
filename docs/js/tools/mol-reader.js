@@ -4,7 +4,8 @@ import { XYZViewer } from '../viewer.js';
 export function getHTML() {
   return `
     <div class="tool-header">
-      <input id="fileInput" type="file" accept=".pdb,.xyz,.mol2,.sdf,.mol,.cif,.mmcif,.cube" />
+      <label for="fileInput" style="padding: 6px 12px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; margin-right: 6px;">Choose File</label>
+      <input id="fileInput" type="file" accept=".pdb,.xyz,.mol2,.sdf,.mol,.cif,.mmcif,.cube" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; overflow: hidden;" />
       <button id="fitBtn">Fit</button>
       <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 4px 8px; background: #f9fafb; border: 1px solid #d1d5db; border-radius: 4px;">
         <label for="pdbInput" style="font-size: 12px; color: #6b7280; font-weight: 500;">PDB ID:</label>
@@ -35,6 +36,9 @@ export function getHTML() {
         </optgroup>
       </select>
       <span class="pill" style="font-size: 12px;">📁 Supports: PDB, XYZ, MOL2, SDF, CIF, CUBE</span>
+      <span id="fileInfoPill" style="display: none; margin-left: 8px; padding: 6px 10px; background: #f3f4f6; border-radius: 999px; font-size: 12px; color: #374151;">
+        <strong id="currentFileNamePill"></strong> • <span id="atomCountPill"></span> atoms
+      </span>
     </div>
 
     <div id="viewer" aria-label="3Dmol viewer">
@@ -491,20 +495,6 @@ export function init() {
       // Load with format
       viewer.loadModel(filteredText, format);
 
-      // Update format info
-      const formatInfo = document.getElementById('formatInfo');
-      const formatName = document.getElementById('formatName');
-      const atomCount = document.getElementById('atomCount');
-
-      formatInfo.style.display = 'block';
-
-      // Show format and model info
-      if (modelCount > 1) {
-        formatName.innerHTML = `${format.toUpperCase()} <span style="color: #f59e0b; font-weight: bold;" title="NMR ensemble with ${modelCount} models">(${modelCount} models, showing first)</span>`;
-      } else {
-        formatName.textContent = format.toUpperCase();
-      }
-
       // Count atoms (fast method for large files)
       let atomCountValue = 0;
       if (format === 'xyz') {
@@ -516,7 +506,12 @@ export function init() {
         const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
         atomCountValue = atomMatches ? atomMatches.length : 0;
       }
-      atomCount.textContent = atomCountValue || 'Unknown';
+
+      // Store format info for display
+      let formatDisplay = format.toUpperCase();
+      if (modelCount > 1) {
+        formatDisplay += ` (${modelCount} models)`;
+      }
 
       // Update loading message with atom count and filename
       updateLoadingMessage(atomCountValue, currentFileName);
@@ -535,6 +530,16 @@ export function init() {
       const detailedStyles = ['stick', 'ball-stick', 'sphere'];
       if (!detailedStyles.includes(finalStyle)) {
         loadingOverlay.style.display = 'none';
+      }
+
+      // Show file info in header pill
+      const fileInfoPill = document.getElementById('fileInfoPill');
+      const currentFileNamePill = document.getElementById('currentFileNamePill');
+      const atomCountPill = document.getElementById('atomCountPill');
+      if (fileInfoPill && currentFileNamePill && atomCountPill && currentFileName) {
+        currentFileNamePill.textContent = currentFileName;
+        atomCountPill.textContent = atomCountValue.toLocaleString();
+        fileInfoPill.style.display = 'inline';
       }
     } catch (error) {
       console.error('Error loading molecule:', error);
@@ -602,17 +607,6 @@ export function init() {
         const filteredText = extractFirstModel(text, format);
         viewer.loadModel(filteredText, format);
 
-        // Update format info
-        const formatInfo = document.getElementById('formatInfo');
-        const formatName = document.getElementById('formatName');
-        formatInfo.style.display = 'block';
-
-        if (modelCount > 1) {
-          formatName.innerHTML = `${format.toUpperCase()} <span style="color: #f59e0b; font-weight: bold;" title="NMR ensemble with ${modelCount} models">(${modelCount} models, showing first)</span>`;
-        } else {
-          formatName.textContent = format.toUpperCase();
-        }
-
         // Count atoms (fast method)
         let atomCountValue = 0;
         if (format === 'xyz') {
@@ -621,6 +615,12 @@ export function init() {
         } else if (format === 'pdb' || format === 'cif') {
           const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
           atomCountValue = atomMatches ? atomMatches.length : 0;
+        }
+
+        // Store format info for display
+        let formatDisplay = format.toUpperCase();
+        if (modelCount > 1) {
+          formatDisplay += ` (${modelCount} models)`;
         }
 
         // Extract filename from URL for display
@@ -642,6 +642,16 @@ export function init() {
           const detailedStyles = ['stick', 'ball-stick', 'sphere'];
           if (!detailedStyles.includes(finalStyle)) {
             loadingOverlay.style.display = 'none';
+          }
+
+          // Show file info in header pill
+          const fileInfoPill = document.getElementById('fileInfoPill');
+          const currentFileNamePill = document.getElementById('currentFileNamePill');
+          const atomCountPill = document.getElementById('atomCountPill');
+          if (fileInfoPill && currentFileNamePill && atomCountPill && filename) {
+            currentFileNamePill.textContent = filename;
+            atomCountPill.textContent = atomCountValue.toLocaleString();
+            fileInfoPill.style.display = 'inline';
           }
         }, 50);
       })
@@ -730,23 +740,11 @@ export function init() {
       const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
       const atomCountValue = atomMatches ? atomMatches.length : 0;
 
-      // Note: Atom clicking will be enabled on-demand when user switches to detailed styles
-
-      // Update format info
-      const formatInfo = document.getElementById('formatInfo');
-      const formatName = document.getElementById('formatName');
-      const atomCount = document.getElementById('atomCount');
-
-      formatInfo.style.display = 'block';
-
-      // Show format with optimization indicator
+      // Store format info for display
+      let formatDisplay = 'PDB';
       if (modelCount > 1) {
-        formatName.innerHTML = `PDB <span style="color: #10b981; font-size: 10px;">⚡optimized</span> <span style="color: #f59e0b; font-weight: bold;" title="NMR ensemble with ${modelCount} models">(${modelCount} models, showing first)</span>`;
-      } else {
-        formatName.innerHTML = `PDB <span style="color: #10b981; font-size: 10px;">⚡optimized</span>`;
+        formatDisplay += ` (${modelCount} models)`;
       }
-
-      atomCount.textContent = atomCountValue || 'Unknown';
 
       // Update loading message with atom count and filename
       updateLoadingMessage(atomCountValue, currentFileName);
@@ -770,6 +768,16 @@ export function init() {
       const detailedStyles = ['stick', 'ball-stick', 'sphere'];
       if (!detailedStyles.includes(finalStyle)) {
         loadingOverlay.style.display = 'none';
+      }
+
+      // Show file info in header pill
+      const fileInfoPill = document.getElementById('fileInfoPill');
+      const currentFileNamePill = document.getElementById('currentFileNamePill');
+      const atomCountPill = document.getElementById('atomCountPill');
+      if (fileInfoPill && currentFileNamePill && atomCountPill && currentFileName) {
+        currentFileNamePill.textContent = currentFileName;
+        atomCountPill.textContent = atomCountValue.toLocaleString();
+        fileInfoPill.style.display = 'inline';
       }
 
     } catch (error) {
