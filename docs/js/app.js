@@ -26,11 +26,8 @@ let toolInstances = {};
 export function init() {
   setupMenuInteraction();
 
-  // Check URL params, if file param exists, directly open xyz-reader
-  const params = new URLSearchParams(location.search);
-  if (params.get('file')) {
-    showTool('xyz-reader');
-  }
+  // Setup hash-based routing
+  setupRouting();
 }
 
 // Setup menu interaction
@@ -55,7 +52,7 @@ function setupMenuInteraction() {
 }
 
 // Switch tools
-export function showTool(toolId) {
+export function showTool(toolId, updateHash = true) {
   // Hide all tool panels
   document.querySelectorAll('.tool-panel').forEach(panel => {
     panel.classList.remove('active');
@@ -75,10 +72,47 @@ export function showTool(toolId) {
     }
 
     currentTool = toolId;
+
+    // Update URL hash for direct linking
+    if (updateHash) {
+      if (toolId === 'welcome') {
+        // Remove hash for welcome page
+        history.pushState(null, '', location.pathname + location.search);
+      } else {
+        history.pushState(null, '', `#${toolId}`);
+      }
+    }
   }
 
   // Close menu
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+}
+
+// Setup hash-based routing
+function setupRouting() {
+  // Handle initial route
+  const handleRoute = () => {
+    const hash = location.hash.slice(1); // Remove '#'
+    const params = new URLSearchParams(location.search);
+
+    if (hash && tools[hash]) {
+      // Direct link to a tool (e.g., #mol-reader)
+      showTool(hash, false);
+    } else if (params.get('file')) {
+      // Legacy support: ?file=... opens xyz-reader
+      showTool('xyz-reader', false);
+    } else {
+      // Default: show welcome page
+      showTool('welcome', false);
+    }
+  };
+
+  // Handle route on page load
+  handleRoute();
+
+  // Handle browser back/forward
+  window.addEventListener('popstate', handleRoute);
+  window.addEventListener('hashchange', handleRoute);
 }
 
 // Export to global for HTML inline event calls

@@ -119,6 +119,23 @@ export function init() {
   const viewerEl = document.getElementById('viewer');
   const on = (el, ev, fn) => el.addEventListener(ev, fn);
 
+  // Handle drop event
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.style.display = 'none';
+    const f = e.dataTransfer?.files?.[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      loadXYZ(text);
+    } catch (error) {
+      console.error('Drag&Drop error:', error);
+      alert(`Failed to load dropped file: ${error.message}`);
+    }
+  };
+
+  // Listen on both viewer and dropzone
   on(viewerEl, 'dragenter', e => {
     e.preventDefault();
     e.stopPropagation();
@@ -138,15 +155,29 @@ export function init() {
     }
   });
 
-  on(viewerEl, 'drop', async (e) => {
+  on(viewerEl, 'drop', handleDrop);
+
+  // Also listen on dropzone itself
+  on(dropzone, 'dragenter', e => {
     e.preventDefault();
     e.stopPropagation();
-    dropzone.style.display = 'none';
-    const f = e.dataTransfer?.files?.[0];
-    if (!f) return;
-    const text = await f.text();
-    loadXYZ(text);
   });
+
+  on(dropzone, 'dragover', e => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  on(dropzone, 'dragleave', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only hide if leaving the dropzone entirely
+    if (!dropzone.contains(e.relatedTarget)) {
+      dropzone.style.display = 'none';
+    }
+  });
+
+  on(dropzone, 'drop', handleDrop);
 
   // Fit button
   document.getElementById('fitBtn').onclick = () => viewer.fit();
