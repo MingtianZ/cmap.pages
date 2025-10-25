@@ -714,44 +714,52 @@ export function init() {
     resetLoadingOverlay(`${pdbId}.pdb`);
 
     try {
-      // Use PDB format with performance optimizations
-      const url = `https://files.rcsb.org/download/${pdbId}.pdb`;
+      // Try PDB format first, fall back to CIF if not available
+      let format = 'pdb';
+      let url = `https://files.rcsb.org/download/${pdbId}.pdb`;
+      let response = await fetch(url);
 
-      const response = await fetch(url);
+      // If PDB not found, try CIF format
+      if (!response.ok && response.status === 404) {
+        format = 'cif';
+        url = `https://files.rcsb.org/download/${pdbId}.cif`;
+        response = await fetch(url);
+      }
+
+      // If still not found, throw error
       if (!response.ok) {
-        throw new Error(`PDB ${pdbId} not found (HTTP ${response.status})`);
+        throw new Error(`${pdbId} not found in PDB or CIF format (HTTP ${response.status})`);
       }
 
       const text = await response.text();
-      currentFormat = 'pdb';
-      currentFileName = `${pdbId}.pdb`;
+      currentFormat = format;
+      currentFileName = `${pdbId}.${format}`;
 
       // Extract first model if multi-model file
-      const modelCount = (text.match(/^MODEL/gm) || []).length || 1;
-      const filteredText = modelCount > 1 ? extractFirstModel(text, 'pdb') : text;
+      let modelCount = 1;
+      if (format === 'pdb') {
+        modelCount = (text.match(/^MODEL/gm) || []).length || 1;
+      } else if (format === 'cif') {
+        modelCount = countCIFModels(text);
+      }
+      const filteredText = modelCount > 1 ? extractFirstModel(text, format) : text;
 
       // Performance parser options for large molecules
       const parserOptions = {
         doAssembly: false,                    // Don't build biological assembly
         duplicateAssemblyAtoms: false,        // Don't duplicate symmetry atoms
         noComputeSecondaryStructure: false,   // Need this for cartoon style
-        assignBonds: true                     // Assign bonds for PDB
+        assignBonds: true                     // Assign bonds
       };
 
       // Load with performance options
       viewer.viewer.removeAllModels();
       viewer.selectedAtoms = [];
-      viewer.model = viewer.viewer.addModel(filteredText, 'pdb', parserOptions);
+      viewer.model = viewer.viewer.addModel(filteredText, format, parserOptions);
 
       // Count atoms (fast method using regex)
       const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
       const atomCountValue = atomMatches ? atomMatches.length : 0;
-
-      // Store format info for display
-      let formatDisplay = 'PDB';
-      if (modelCount > 1) {
-        formatDisplay += ` (${modelCount} models)`;
-      }
 
       // Update loading message with atom count and filename
       updateLoadingMessage(atomCountValue, currentFileName);
@@ -762,7 +770,7 @@ export function init() {
       // Always use auto style when loading new files from RCSB
       const styleSelect = document.getElementById('styleSelect');
       styleSelect.value = 'auto';
-      const finalStyle = getAutoStyle('pdb', '', atomCountValue);
+      const finalStyle = getAutoStyle(format, '', atomCountValue);
       applyStyleByName(viewer, finalStyle);
 
       // Fit view to center the molecule
@@ -788,7 +796,7 @@ export function init() {
       }
 
     } catch (error) {
-      alert(`Failed to load PDB: ${error.message}`);
+      alert(`Failed to load from RCSB: ${error.message}`);
       console.error('RCSB load error:', error);
       loadingOverlay.style.display = 'none';
     } finally {
