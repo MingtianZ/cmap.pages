@@ -1,11 +1,12 @@
 // Molecule Reader tool module - supports multiple formats
 import { XYZViewer } from '../viewer.js';
+import { parseGJF } from '../parsers/gjf-parser.js';
 
 export function getHTML() {
   return `
     <div class="tool-header">
       <label for="fileInput" style="padding: 6px 12px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; margin-right: 6px;">Choose File</label>
-      <input id="fileInput" type="file" accept=".pdb,.xyz,.mol2,.sdf,.mol,.cif,.mmcif,.cube" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; overflow: hidden;" />
+      <input id="fileInput" type="file" accept=".pdb,.xyz,.mol2,.sdf,.mol,.cif,.mmcif,.cube,.gjf,.com" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; overflow: hidden;" />
       <button id="fitBtn">Fit</button>
       <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 4px 8px; background: #f9fafb; border: 1px solid #d1d5db; border-radius: 4px;">
         <label for="pdbInput" style="font-size: 12px; color: #6b7280; font-weight: 500;">PDB ID:</label>
@@ -39,7 +40,7 @@ export function getHTML() {
           <option value="surface-sas-white">SAS (White)</option>
         </optgroup>
       </select>
-      <span class="pill" style="font-size: 12px;">📁 Supports: PDB, XYZ, MOL2, SDF, CIF, CUBE</span>
+      <span class="pill" style="font-size: 12px;">📁 Supports: PDB, XYZ, MOL2, SDF, CIF, CUBE, GJF</span>
       <span id="fileInfoPill" style="display: none; margin-left: 8px; padding: 6px 10px; background: #f3f4f6; border-radius: 999px; font-size: 12px; color: #374151;">
         <strong id="currentFileNamePill" style="color: #3b82f6; cursor: pointer; text-decoration: underline;"></strong> • <span id="atomCountPill"></span> atoms
       </span>
@@ -188,7 +189,9 @@ export function init() {
       'mol': 'sdf',
       'cif': 'cif',
       'mmcif': 'cif',
-      'cube': 'cube'
+      'cube': 'cube',
+      'gjf': 'gjf',
+      'com': 'gjf'
     };
 
     if (formatMap[ext]) {
@@ -485,21 +488,32 @@ export function init() {
         throw new Error('File is empty');
       }
 
-      const format = detectFormat(file.name, text);
+      let format = detectFormat(file.name, text);
       currentFormat = format;
       currentFileName = file.name;
       currentFileContent = text;
 
+      // Convert GJF to XYZ format
+      let processedText = text;
+      if (format === 'gjf') {
+        try {
+          processedText = parseGJF(text);
+          format = 'xyz'; // Load as XYZ after conversion
+        } catch (error) {
+          throw new Error(`Failed to parse GJF file: ${error.message}`);
+        }
+      }
+
       // Count models based on format
       let modelCount = 1;
       if (format === 'pdb') {
-        modelCount = (text.match(/^MODEL/gm) || []).length || 1;
+        modelCount = (processedText.match(/^MODEL/gm) || []).length || 1;
       } else if (format === 'cif') {
-        modelCount = countCIFModels(text);
+        modelCount = countCIFModels(processedText);
       }
 
       // Extract first model if multi-model file
-      const filteredText = extractFirstModel(text, format);
+      const filteredText = extractFirstModel(processedText, format);
 
       // Load with format
       viewer.loadModel(filteredText, format);
@@ -508,11 +522,11 @@ export function init() {
       let atomCountValue = 0;
       if (format === 'xyz') {
         // For XYZ: first line contains atom count
-        const firstLine = text.split('\n')[0];
+        const firstLine = processedText.split('\n')[0];
         atomCountValue = parseInt(firstLine) || 0;
       } else if (format === 'pdb' || format === 'cif') {
         // Use regex count instead of splitting for performance
-        const atomMatches = text.match(/^(?:ATOM|HETATM)/gm);
+        const atomMatches = processedText.match(/^(?:ATOM|HETATM)/gm);
         atomCountValue = atomMatches ? atomMatches.length : 0;
       }
 
@@ -531,7 +545,7 @@ export function init() {
       // Always use auto style when loading new files to avoid freezing on large molecules
       const styleSelect = document.getElementById('styleSelect');
       styleSelect.value = 'auto'; // Reset to auto
-      const finalStyle = getAutoStyle(format, text, atomCountValue);
+      const finalStyle = getAutoStyle(format, processedText, atomCountValue);
       applyStyleByName(viewer, finalStyle);
 
       // Only hide loading overlay if not using detailed style
