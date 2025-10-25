@@ -44,8 +44,6 @@ export function getHTML() {
 }
 
 export async function init() {
-  console.log('Global QM vs Survey initialized');
-
   // Check if Plotly is available
   if (typeof Plotly === 'undefined') {
     console.error('Plotly.js is not loaded!');
@@ -70,31 +68,17 @@ async function loadDataAndPlot() {
 
   try {
     // Load all data files
-    console.log('Loading QM data...');
     const [agQM, ezQM, zaQM] = await Promise.all([
       loadCSV('assets/global_ag_qm.csv'),
       loadCSV('assets/global_ez_qm.csv'),
       loadCSV('assets/global_za_qm.csv')
     ]);
 
-    console.log('QM data loaded:', {
-      agQM: agQM.length,
-      ezQM: ezQM.length,
-      zaQM: zaQM.length
-    });
-
-    console.log('Loading survey histogram data...');
     const [agSurvey, ezSurvey, zaSurvey] = await Promise.all([
       loadJSON('assets/survey_ag_hist.json'),
       loadJSON('assets/survey_ez_hist.json'),
       loadJSON('assets/survey_za_hist.json')
     ]);
-
-    console.log('Survey data loaded:', {
-      agSurvey: agSurvey.histogram?.length || 0,
-      ezSurvey: ezSurvey.histogram?.length || 0,
-      zaSurvey: zaSurvey.histogram?.length || 0
-    });
 
     // Hide loading overlay
     if (loadingOverlay) {
@@ -102,7 +86,6 @@ async function loadDataAndPlot() {
     }
 
     // Create all plots
-    console.log('Creating plots...');
     createQMPlot(agQM, 'alpha', 'gamma', 'plot-ag-qm',
                  'QM: α-γ CMAP', 'α (degrees)', 'γ (degrees)', 12);
     createSurveyPlot(agSurvey, 'plot-ag-survey',
@@ -117,8 +100,6 @@ async function loadDataAndPlot() {
                  'QM: ζ-α CMAP (intra-residue)', 'ζ (degrees)', 'α (degrees)', 8);
     createSurveyPlot(zaSurvey, 'plot-za-survey',
                      'PDB Survey: ζ-α (cross-residue)', 'ζ (degrees)', 'α (degrees)');
-
-    console.log('All plots created successfully!');
 
   } catch (error) {
     console.error('Error loading data:', error);
@@ -139,7 +120,6 @@ async function loadDataAndPlot() {
 }
 
 async function loadCSV(url) {
-  console.log(`Fetching CSV: ${url}`);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
@@ -163,24 +143,19 @@ async function loadCSV(url) {
     data.push(row);
   }
 
-  console.log(`Loaded ${data.length} rows from ${url}`);
   return data;
 }
 
 async function loadJSON(url) {
-  console.log(`Fetching JSON: ${url}`);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
   }
   const json = await response.json();
-  console.log(`Loaded JSON from ${url}`);
   return json;
 }
 
 function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, vmax) {
-  console.log(`Creating QM plot: ${title}, data points: ${data.length}, vmax: ${vmax}`);
-
   // Extract data points - use scatter data for better interpolation
   const angle1 = data.map(d => d[angle1Key]);
   const angle2 = data.map(d => d[angle2Key]);
@@ -309,11 +284,9 @@ function createQMPlot(data, angle1Key, angle2Key, divId, title, xlabel, ylabel, 
   };
 
   Plotly.newPlot(divId, [trace], layout, config);
-  console.log(`QM plot created successfully: ${divId}`);
 }
 
 function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
-  console.log(`Creating Survey plot: ${title}`);
 
   // Extract angle symbols from labels for hover text
   const angle1Name = xlabel.split(' ')[0];  // 'α (degrees)' -> 'α'
@@ -344,8 +317,6 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
 
   const vmaxOriginal = maxValOriginal * 0.5;  // Python: vmax = np.max(hist_plot) * 0.5
   const vmax = Math.log10(vmaxOriginal);       // Convert to log space
-
-  console.log(`Survey plot: maxOriginal=${maxValOriginal}, vmaxOriginal=${vmaxOriginal}, vmax(log)=${vmax}`);
 
   // Apply log transform to histogram data (add 1 to avoid log(0))
   const histLog = histTransposed.map(row =>
@@ -423,7 +394,6 @@ function createSurveyPlot(histData, divId, title, xlabel, ylabel) {
   };
 
   Plotly.newPlot(divId, [trace], layout, config);
-  console.log(`Survey plot created successfully: ${divId}`);
 }
 
 // Utility function to transpose a 2D array

@@ -12,5 +12,5 @@ export function getHTML() {
 }
 
 export function init() {
-  console.log('Grid Viewer initialized (placeholder)');
+  // No initialization needed
 }

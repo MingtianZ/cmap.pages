@@ -30,8 +30,6 @@ export function getHTML() {
 }
 
 export async function init() {
-  console.log('Global single plot initialized');
-
   // Find the currently active tool panel to avoid duplicate ID issues
   const container = document.querySelector('.tool-panel.active');
   if (!container) {
@@ -50,8 +48,6 @@ export async function init() {
   const angle1 = container.dataset.angle1;
   const angle2 = container.dataset.angle2;
   const title = container.dataset.plotTitle;
-
-  console.log('Single plot config:', { type, angle1, angle2, title });
 
   if (!type || !angle1 || !angle2 || !title) {
     console.error('Missing configuration data attributes');
@@ -116,7 +112,6 @@ export async function init() {
 async function loadAndDisplayQM(angle1, angle2, title, container) {
   // Load QM data
   const csvFile = `assets/global_${angle1}${angle2}_qm.csv`;
-  console.log(`Loading QM data from ${csvFile}`);
 
   const response = await fetch(csvFile);
   if (!response.ok) throw new Error(`Failed to load ${csvFile}`);
@@ -134,8 +129,6 @@ async function loadAndDisplayQM(angle1, angle2, title, container) {
     });
     data.push(row);
   }
-
-  console.log(`Loaded ${data.length} QM data points`);
 
   // Create plot container within the active panel
   const wrapper = container.querySelector('.single-plot-wrapper');
@@ -169,19 +162,16 @@ async function loadAndDisplayQM(angle1, angle2, title, container) {
   createQMPlotLarge(data, angle1Key, angle2Key, plotDiv, title, xlabel, ylabel, vmax);
 
   // Add click event handler for loading xyz structures
-  setupPlotClickHandler(plotDiv, angle1, angle2, container);
+  setupPlotClickHandler(plotDiv, angle1, angle2, container, 'qm', data, angle1Key, angle2Key);
 }
 
 async function loadAndDisplaySurvey(angle1, angle2, title, container) {
   // Load survey histogram data
   const jsonFile = `assets/survey_${angle1}${angle2}_hist.json`;
-  console.log(`Loading survey data from ${jsonFile}`);
 
   const response = await fetch(jsonFile);
   if (!response.ok) throw new Error(`Failed to load ${jsonFile}`);
   const histData = await response.json();
-
-  console.log(`Loaded survey histogram data`);
 
   // Create plot container within the active panel
   const wrapper = container.querySelector('.single-plot-wrapper');
@@ -456,7 +446,7 @@ function transpose2D(matrix) {
 }
 
 // Setup click handler for loading xyz structures from GitHub
-function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
+function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'survey', csvData = null, angle1Key = null, angle2Key = null) {
   // Initialize XYZ viewer in the right panel
   const viewerContainer = container.querySelector('#structure-viewer');
   if (!viewerContainer) {
@@ -605,9 +595,6 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
     const xyzFile = `global_${angle1}${angle2}_${angle1Letter}${normalizedX}_${angle2Letter}${normalizedY}.xyz`;
     const githubUrl = `https://raw.githubusercontent.com/MingtianZ/cmap.pages/refs/heads/main/xyz/${xyzFile}`;
 
-    console.log(`Loading structure: ${xyzFile} from GitHub`);
-    console.log(`Clicked: (${clickedX.toFixed(1)}, ${clickedY.toFixed(1)}) -> Grid: (${normalizedX}, ${normalizedY})`);
-
     // Show loading message (create if not exists)
     let loadingMsg = viewerContainer.querySelector('.loading-message');
     if (!loadingMsg) {
@@ -634,12 +621,29 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
       // Hide loading message
       loadingMsg.style.display = 'none';
 
+      // Find energy data for this point (only for QM plots)
+      let energyInfo = '';
+      if (type === 'qm' && csvData) {
+        // Find the data point matching the clicked coordinates
+        const dataPoint = csvData.find(d => {
+          const d1 = d[angle1Key];
+          const d2 = d[angle2Key];
+          return d1 === normalizedX && d2 === normalizedY;
+        });
+
+        if (dataPoint && dataPoint.qm_energy !== undefined) {
+          const absEnergy = dataPoint.qm_energy; // Hartree
+          const relEnergy = dataPoint.energy_rel; // kcal/mol
+          energyInfo = ` | E = ${absEnergy.toFixed(6)} Ha, ΔE = ${relEnergy.toFixed(2)} kcal/mol`;
+        }
+      }
+
       // Update panel title
       const panelTitle = container.querySelector('.xyz-viewer-panel h3');
       if (panelTitle) {
         const angle1Symbol = angle1 === 'a' ? 'α' : (angle1 === 'e' ? 'ε' : 'ζ');
         const angle2Symbol = angle2 === 'g' ? 'γ' : (angle2 === 'z' ? 'ζ' : 'α');
-        panelTitle.textContent = `Structure: ${angle1Symbol}=${normalizedX}°, ${angle2Symbol}=${normalizedY}°`;
+        panelTitle.textContent = `Structure: ${angle1Symbol}=${normalizedX}°, ${angle2Symbol}=${normalizedY}°${energyInfo}`;
       }
 
       // Enable download button and set up download
@@ -659,8 +663,6 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container) {
           URL.revokeObjectURL(url);
         };
       }
-
-      console.log(`Successfully loaded ${xyzFile}`);
     } catch (error) {
       console.error('Error loading xyz file:', error);
       loadingMsg.style.display = 'block';

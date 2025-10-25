@@ -277,5 +277,5 @@ export function getHTML() {
 }
 
 export function init() {
-  console.log('About T3PS page loaded');
+  // No initialization needed
 }
