@@ -25,6 +25,7 @@
           Global QM vs Survey ▶
           <div class="submenu">
             <div class="dropdown-item" onclick="showTool('global-qm-survey')">All Plots</div>
+            <div class="dropdown-item" onclick="showTool('structure-analysis')">Structure Analysis</div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-item" onclick="showTool('global-ag-qm')">α-γ QM CMAP</div>
             <div class="dropdown-item" onclick="showTool('global-ag-survey')">α-γ Survey</div>
@@ -74,10 +75,10 @@
           <p>Load and visualize multiple molecular file formats (PDB, XYZ, MOL2, SDF, CIF) with interactive measurement tools</p>
         </div>
 
-        <div class="feature-card" onclick="showTool('xyz-reader')">
+        <div class="feature-card" onclick="showTool('structure-analysis')">
           <div class="feature-icon">🧬</div>
-          <h3>XYZ Structure Viewer</h3>
-          <p>Load and visualize molecular structures, measure dihedral angles interactively</p>
+          <h3>Structure Analysis</h3>
+          <p>Analyze DNA/RNA backbone dihedrals and visualize on CMAP surveys automatically</p>
         </div>
 
         <div class="feature-card" onclick="showTool('global-ag-qm')">
@@ -128,6 +129,9 @@
 
     <!-- Molecule Reader (dynamically loaded) -->
     <div id="mol-reader" class="tool-panel tool-layout-flex"></div>
+
+    <!-- Structure Analysis (dynamically loaded) -->
+    <div id="structure-analysis" class="tool-panel"></div>
 
     <!-- XYZ Reader (dynamically loaded) -->
     <div id="xyz-reader" class="tool-panel tool-layout-flex"></div>

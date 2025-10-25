@@ -4,6 +4,7 @@ import * as MolReader from './tools/mol-reader.js';
 import * as AboutT3PS from './tools/about-t3ps.js';
 import * as GlobalQMSurvey from './tools/global-qm-survey.js';
 import * as GlobalSingle from './tools/global-single.js';
+import * as StructureAnalysis from './tools/structure-analysis.js';
 
 // Tool registry
 const tools = {
@@ -11,6 +12,7 @@ const tools = {
   'mol-reader': MolReader,
   'about-t3ps': AboutT3PS,
   'global-qm-survey': GlobalQMSurvey,
+  'structure-analysis': StructureAnalysis,
   'global-ag-qm': GlobalSingle,
   'global-ag-survey': GlobalSingle,
   'global-ez-qm': GlobalSingle,
