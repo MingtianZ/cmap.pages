@@ -41,7 +41,7 @@ export function getHTML() {
       </select>
       <span class="pill" style="font-size: 12px;">📁 Supports: PDB, XYZ, MOL2, SDF, CIF, CUBE</span>
       <span id="fileInfoPill" style="display: none; margin-left: 8px; padding: 6px 10px; background: #f3f4f6; border-radius: 999px; font-size: 12px; color: #374151;">
-        <strong id="currentFileNamePill"></strong> • <span id="atomCountPill"></span> atoms
+        <strong id="currentFileNamePill" style="color: #3b82f6; cursor: pointer; text-decoration: underline;"></strong> • <span id="atomCountPill"></span> atoms
       </span>
     </div>
 
@@ -92,6 +92,7 @@ export function init() {
 
   let currentFormat = null;
   let currentFileName = null;
+  let currentFileContent = null;
 
   // Update measurement panel
   function updateMeasurePanel(data) {
@@ -487,6 +488,7 @@ export function init() {
       const format = detectFormat(file.name, text);
       currentFormat = format;
       currentFileName = file.name;
+      currentFileContent = text;
 
       // Count models based on format
       let modelCount = 1;
@@ -734,6 +736,7 @@ export function init() {
       const text = await response.text();
       currentFormat = format;
       currentFileName = `${pdbId}.${format}`;
+      currentFileContent = text;
 
       // Extract first model if multi-model file
       let modelCount = 1;
@@ -815,6 +818,26 @@ export function init() {
     } else {
       applyStyleByName(viewer, selectedStyle);
     }
+  });
+
+  // Download file when clicking filename
+  const currentFileNamePill = document.getElementById('currentFileNamePill');
+  currentFileNamePill.addEventListener('click', () => {
+    if (!currentFileContent || !currentFileName) {
+      alert('No file loaded to download');
+      return;
+    }
+
+    // Create download link
+    const blob = new Blob([currentFileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 
   // Drag and drop loading
