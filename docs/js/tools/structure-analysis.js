@@ -341,6 +341,14 @@ function analyzeDihedrals(viewer, fileName = null) {
   plotDihedralsOnCMAPs(dihedrals, viewer);
 }
 
+function isBonded(atom1, atom2, maxDist) {
+  const dx = atom1.x - atom2.x;
+  const dy = atom1.y - atom2.y;
+  const dz = atom1.z - atom2.z;
+  const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  return dist <= maxDist;
+}
+
 function calculateBackboneDihedrals(atoms) {
   // Group atoms by residue
   const residues = {};
@@ -385,7 +393,8 @@ function calculateBackboneDihedrals(atoms) {
       const o5p = currRes.atoms.find(a => a.atom === "O5'" || a.atom === "O5*");
       const c5p = currRes.atoms.find(a => a.atom === "C5'" || a.atom === "C5*");
 
-      if (o3p && p && o5p && c5p) {
+      // Check if residues are chemically bonded (O3'(i-1)-P(i) distance < 2.5 Å)
+      if (o3p && p && o5p && c5p && isBonded(o3p, p, 2.5)) {
         angles.alpha = calculateDihedral(o3p, p, o5p, c5p);
         atomGroups.alpha = [o3p, p, o5p, c5p];
       }
@@ -415,7 +424,8 @@ function calculateBackboneDihedrals(atoms) {
     if (nextRes && nextRes.chain === currRes.chain) {
       const pNext = nextRes.atoms.find(a => a.atom === 'P');
 
-      if (c4p && c3p && o3p && pNext) {
+      // Check if residues are chemically bonded (O3'-P distance < 2.5 Å)
+      if (c4p && c3p && o3p && pNext && isBonded(o3p, pNext, 2.5)) {
         angles.epsilon = calculateDihedral(c4p, c3p, o3p, pNext);
         atomGroups.epsilon = [c4p, c3p, o3p, pNext];
       }
@@ -426,7 +436,8 @@ function calculateBackboneDihedrals(atoms) {
       const pNext = nextRes.atoms.find(a => a.atom === 'P');
       const o5pNext = nextRes.atoms.find(a => a.atom === "O5'" || a.atom === "O5*");
 
-      if (c3p && o3p && pNext && o5pNext) {
+      // Check if residues are chemically bonded (O3'-P distance < 2.5 Å)
+      if (c3p && o3p && pNext && o5pNext && isBonded(o3p, pNext, 2.5)) {
         angles.zeta = calculateDihedral(c3p, o3p, pNext, o5pNext);
         atomGroups.zeta = [c3p, o3p, pNext, o5pNext];
       }
