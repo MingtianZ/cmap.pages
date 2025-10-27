@@ -419,8 +419,16 @@ function calculateBackboneDihedrals(atoms) {
       atomGroups.gamma = [o5p, c5p, c4p, c3p];
     }
 
-    // Calculate ε (C4'(i) - C3'(i) - O3'(i) - P(i+1))
+    // Calculate δ (C5'(i) - C4'(i) - C3'(i) - O3'(i))
+    // and get O3' for ε and ζ calculations
     const o3p = currRes.atoms.find(a => a.atom === "O3'" || a.atom === "O3*");
+
+    if (c5p && c4p && c3p && o3p) {
+      angles.delta = calculateDihedral(c5p, c4p, c3p, o3p);
+      atomGroups.delta = [c5p, c4p, c3p, o3p];
+    }
+
+    // Calculate ε (C4'(i) - C3'(i) - O3'(i) - P(i+1))
     if (nextRes && nextRes.chain === currRes.chain) {
       const pNext = nextRes.atoms.find(a => a.atom === 'P');
 
@@ -534,6 +542,7 @@ function displayResults(dihedrals) {
   html += '<th style="padding: 4px; border: 1px solid #ddd;">α</th>';
   html += '<th style="padding: 4px; border: 1px solid #ddd;">β</th>';
   html += '<th style="padding: 4px; border: 1px solid #ddd;">γ</th>';
+  html += '<th style="padding: 4px; border: 1px solid #ddd;">δ</th>';
   html += '<th style="padding: 4px; border: 1px solid #ddd;">ε</th>';
   html += '<th style="padding: 4px; border: 1px solid #ddd;">ζ</th>';
   html += '</tr>';
@@ -545,6 +554,7 @@ function displayResults(dihedrals) {
     html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.alpha !== undefined ? d.angles.alpha.toFixed(1) + '°' : '-'}</td>`;
     html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.beta !== undefined ? d.angles.beta.toFixed(1) + '°' : '-'}</td>`;
     html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.gamma !== undefined ? d.angles.gamma.toFixed(1) + '°' : '-'}</td>`;
+    html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.delta !== undefined ? d.angles.delta.toFixed(1) + '°' : '-'}</td>`;
     html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.epsilon !== undefined ? d.angles.epsilon.toFixed(1) + '°' : '-'}</td>`;
     html += `<td style="padding: 4px; border: 1px solid #ddd; text-align: center;">${d.angles.zeta !== undefined ? d.angles.zeta.toFixed(1) + '°' : '-'}</td>`;
     html += '</tr>';
