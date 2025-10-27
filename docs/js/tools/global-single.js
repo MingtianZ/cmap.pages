@@ -597,14 +597,12 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
       dataPoint = csvData.find(d => {
         const d1 = d[angle1Key];
         const d2 = d[angle2Key];
-        // Check exact match
-        if (d1 === normalizedX && d2 === normalizedY) return true;
-        // Check 0/360 equivalence
-        if ((normalizedX === 0 && d1 === 360 || normalizedX === 360 && d1 === 0) &&
-            (normalizedY === 0 && d2 === 360 || normalizedY === 360 && d2 === 0 || d2 === normalizedY)) return true;
-        if ((normalizedY === 0 && d2 === 360 || normalizedY === 360 && d2 === 0) &&
-            (normalizedX === 0 && d1 === 360 || normalizedX === 360 && d1 === 0 || d1 === normalizedX)) return true;
-        return false;
+
+        // Check if angles match (with 0/360 equivalence)
+        const x1Match = d1 === normalizedX || (normalizedX === 0 && d1 === 360) || (normalizedX === 360 && d1 === 0);
+        const y1Match = d2 === normalizedY || (normalizedY === 0 && d2 === 360) || (normalizedY === 360 && d2 === 0);
+
+        return x1Match && y1Match;
       });
 
       if (dataPoint) {
