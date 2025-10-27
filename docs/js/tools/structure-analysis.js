@@ -122,7 +122,15 @@ export async function init() {
         throw new Error(`${pdbId} not found`);
       }
 
-      const text = await response.text();
+      let text = await response.text();
+
+      // Extract only the first model for multi-model files
+      if (format === 'pdb') {
+        text = extractFirstModelPDB(text);
+      } else if (format === 'cif') {
+        text = extractFirstModelCIF(text);
+      }
+
       const fileName = `${pdbId}.${format}`;
       currentStructure = { text, format, name: fileName };
       currentFileData = { text, name: fileName };
@@ -184,8 +192,15 @@ async function loadStructure(file, viewer) {
   }
 
   try {
-    const text = await file.text();
+    let text = await file.text();
     const format = detectFormat(file.name);
+
+    // For PDB/CIF files with multiple models, extract only the first model
+    if (format === 'pdb') {
+      text = extractFirstModelPDB(text);
+    } else if (format === 'cif') {
+      text = extractFirstModelCIF(text);
+    }
 
     currentStructure = { text, format, name: file.name };
     currentFileData = { text, name: file.name };
@@ -753,4 +768,112 @@ function highlightAtoms(viewerWrapper, atoms) {
   });
 
   viewer.render();
+}
+
+function extractFirstModelPDB(text) {
+  // Extract only the first MODEL from PDB file
+  // If no MODEL/ENDMDL keywords, return entire file (single model)
+  const lines = text.split('\n');
+  const result = [];
+  let inModel = false;
+  let modelCount = 0;
+  let hasModelKeyword = false;
+
+  for (const line of lines) {
+    const record = line.substring(0, 6).trim();
+
+    if (record === 'MODEL') {
+      hasModelKeyword = true;
+      modelCount++;
+      if (modelCount === 1) {
+        inModel = true;
+        result.push(line);
+      }
+    } else if (record === 'ENDMDL') {
+      if (modelCount === 1) {
+        result.push(line);
+        inModel = false;
+        break; // Stop after first model
+      }
+    } else if (record === 'END') {
+      result.push(line);
+      break;
+    } else {
+      // If no MODEL keyword exists, keep all lines (single model file)
+      // If we're in the first model, keep the line
+      if (!hasModelKeyword || inModel) {
+        result.push(line);
+      }
+    }
+  }
+
+  return result.join('\n');
+}
+
+function extractFirstModelCIF(text) {
+  // Extract only the first model from mmCIF file
+  // Based on mol-reader.js implementation
+  const lines = text.split(/\r?\n/);
+  const out = [];
+  let i = 0;
+  const isHeader = l => /^_/.test(l);
+  const isLoop = l => /^\s*loop_\s*$/.test(l);
+  const isAtomSiteHeader = l => /^_atom_site\./i.test(l);
+  const tokenize = l => l.match(/'(?:[^']*)'|"(?:[^"]*)"|\S+/g) || [];
+  const unquote = v => v?.replace(/^['"]|['"]$/g, '') ?? '';
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check if we're at the atom_site loop
+    if (isLoop(line) && isAtomSiteHeader(lines[i + 1] || '')) {
+      out.push(lines[i]);
+      i++;
+
+      // Collect headers
+      const headers = [];
+      while (i < lines.length && isAtomSiteHeader(lines[i])) {
+        headers.push(lines[i]);
+        out.push(lines[i]);
+        i++;
+      }
+
+      // Find model number column index
+      const modelIdx = headers.findIndex(h =>
+        /_atom_site\.(pdbx_PDB_model_num|label_model_id|model_id)/i.test(h)
+      );
+
+      // Collect all atom rows
+      const rows = [];
+      while (
+        i < lines.length &&
+        !isLoop(lines[i]) &&
+        !(isHeader(lines[i]) && !isAtomSiteHeader(lines[i])) &&
+        !/^data_/i.test(lines[i])
+      ) {
+        rows.push(lines[i]);
+        i++;
+      }
+
+      // Filter to keep only model 1
+      if (modelIdx === -1) {
+        // No model column, keep all rows (single model)
+        out.push(...rows);
+      } else {
+        // Filter rows where model number is '1'
+        const filtered = rows.filter(r => {
+          const t = tokenize(r);
+          const v = unquote(t[modelIdx]);
+          if (!v || v === '.' || v === '?') return true;
+          return v === '1';
+        });
+        out.push(...filtered);
+      }
+      continue;
+    }
+
+    out.push(line);
+    i++;
+  }
+  return out.join('\n');
 }
