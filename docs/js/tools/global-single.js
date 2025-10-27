@@ -583,17 +583,47 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
     const gridX = Math.round(clickedX / 15) * 15;
     const gridY = Math.round(clickedY / 15) * 15;
 
-    // Normalize to 0-345 range (wrapping around)
-    // All files use 0-345 grid uniformly, no need to check 0/360 equivalence
+    // Normalize to 0-360 range (wrapping around) for CSV lookup
     const normalizedX = ((gridX % 360) + 360) % 360;
     const normalizedY = ((gridY % 360) + 360) % 360;
+
+    // For QM plots: find the actual data point in CSV first to get correct angle values
+    let dataPoint = null;
+    let actualX = normalizedX;
+    let actualY = normalizedY;
+
+    if (type === 'qm' && csvData) {
+      // Find the data point - CSV may use 0 or 360 for the same position
+      dataPoint = csvData.find(d => {
+        const d1 = d[angle1Key];
+        const d2 = d[angle2Key];
+        // Check exact match
+        if (d1 === normalizedX && d2 === normalizedY) return true;
+        // Check 0/360 equivalence
+        if ((normalizedX === 0 && d1 === 360 || normalizedX === 360 && d1 === 0) &&
+            (normalizedY === 0 && d2 === 360 || normalizedY === 360 && d2 === 0 || d2 === normalizedY)) return true;
+        if ((normalizedY === 0 && d2 === 360 || normalizedY === 360 && d2 === 0) &&
+            (normalizedX === 0 && d1 === 360 || normalizedX === 360 && d1 === 0 || d1 === normalizedX)) return true;
+        return false;
+      });
+
+      if (dataPoint) {
+        // Use the actual angle values from CSV data
+        actualX = dataPoint[angle1Key];
+        actualY = dataPoint[angle2Key];
+      }
+    }
+
+    // Convert to 0-345 range for XYZ file lookup (all files use 0-345 grid)
+    const xyzX = actualX === 360 ? 0 : actualX;
+    const xyzY = actualY === 360 ? 0 : actualY;
 
     // Construct filename for 0-345 grid
     // Format: global_{angle1}{angle2}_{letter1}{x}_{letter2}{y}.xyz
     // Example: global_ag_a0_g0.xyz for α=0°, γ=0°
     const angle1Letter = angle1 === 'a' ? 'a' : (angle1 === 'e' ? 'e' : 'z');
     const angle2Letter = angle2 === 'g' ? 'g' : (angle2 === 'z' ? 'z' : 'a');
-    const xyzFile = `global_${angle1}${angle2}_${angle1Letter}${normalizedX}_${angle2Letter}${normalizedY}.xyz`;
+    const xyzFile = `global_${angle1}${angle2}_${angle1Letter}${xyzX}_${angle2Letter}${xyzY}.xyz`;
     const githubUrl = `https://raw.githubusercontent.com/MingtianZ/cmap.pages/refs/heads/main/xyz/${xyzFile}`;
 
     // Show loading message (create if not exists)
@@ -622,36 +652,20 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
       // Hide loading message
       loadingMsg.style.display = 'none';
 
-      // Find energy data for this point (only for QM plots)
+      // Prepare energy info (only for QM plots)
       let energyInfo = '';
-      if (type === 'qm' && csvData) {
-        // Find the data point matching the clicked coordinates
-        // CSV data may use 360° instead of 0° due to calculation conventions
-        const dataPoint = csvData.find(d => {
-          const d1 = d[angle1Key];
-          const d2 = d[angle2Key];
-          // Check exact match
-          if (d1 === normalizedX && d2 === normalizedY) return true;
-          // Check 0/360 equivalence
-          const x1 = normalizedX === 0 ? 360 : normalizedX;
-          const y1 = normalizedY === 0 ? 360 : normalizedY;
-          if (d1 === x1 && d2 === y1) return true;
-          return false;
-        });
-
-        if (dataPoint && dataPoint.qm_energy !== undefined) {
-          const absEnergy = dataPoint.qm_energy; // Hartree
-          const relEnergy = dataPoint.energy_rel; // kcal/mol
-          energyInfo = ` | E = ${absEnergy.toFixed(6)} Ha, ΔE = ${relEnergy.toFixed(2)} kcal/mol`;
-        }
+      if (type === 'qm' && dataPoint && dataPoint.qm_energy !== undefined) {
+        const absEnergy = dataPoint.qm_energy; // Hartree
+        const relEnergy = dataPoint.energy_rel; // kcal/mol
+        energyInfo = ` | E = ${absEnergy.toFixed(6)} Ha, ΔE = ${relEnergy.toFixed(2)} kcal/mol`;
       }
 
-      // Update panel title
+      // Update panel title with display angles (use 0-345 for consistency)
       const panelTitle = container.querySelector('.xyz-viewer-panel h3');
       if (panelTitle) {
         const angle1Symbol = angle1 === 'a' ? 'α' : (angle1 === 'e' ? 'ε' : 'ζ');
         const angle2Symbol = angle2 === 'g' ? 'γ' : (angle2 === 'z' ? 'ζ' : 'α');
-        panelTitle.textContent = `Structure: ${angle1Symbol}=${normalizedX}°, ${angle2Symbol}=${normalizedY}°${energyInfo}`;
+        panelTitle.textContent = `Structure: ${angle1Symbol}=${xyzX}°, ${angle2Symbol}=${xyzY}°${energyInfo}`;
       }
 
       // Enable download button and set up download
