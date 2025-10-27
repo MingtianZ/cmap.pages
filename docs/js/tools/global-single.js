@@ -584,12 +584,13 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
     const gridY = Math.round(clickedY / 15) * 15;
 
     // Normalize to 0-345 range (wrapping around)
+    // All files use 0-345 grid uniformly, no need to check 0/360 equivalence
     const normalizedX = ((gridX % 360) + 360) % 360;
     const normalizedY = ((gridY % 360) + 360) % 360;
 
-    // Construct GitHub raw URL
-    // Format: global_{angle1}{angle2}_a{x}_g{y}.xyz
-    // Example: global_ag_a0_g0.xyz for α=0, γ=0
+    // Construct filename for 0-345 grid
+    // Format: global_{angle1}{angle2}_{letter1}{x}_{letter2}{y}.xyz
+    // Example: global_ag_a0_g0.xyz for α=0°, γ=0°
     const angle1Letter = angle1 === 'a' ? 'a' : (angle1 === 'e' ? 'e' : 'z');
     const angle2Letter = angle2 === 'g' ? 'g' : (angle2 === 'z' ? 'z' : 'a');
     const xyzFile = `global_${angle1}${angle2}_${angle1Letter}${normalizedX}_${angle2Letter}${normalizedY}.xyz`;
@@ -606,10 +607,10 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
     loadingMsg.textContent = `Loading ${xyzFile}...`;
 
     try {
-      // Fetch the xyz file from GitHub
+      // Fetch the xyz file from GitHub (single request, all files exist in 0-345 grid)
       const response = await fetch(githubUrl);
       if (!response.ok) {
-        throw new Error(`Failed to load ${xyzFile}: ${response.status} ${response.statusText}`);
+        throw new Error(`File not found: ${xyzFile} (${response.status})`);
       }
       const xyzData = await response.text();
 
