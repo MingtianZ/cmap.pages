@@ -626,10 +626,17 @@ function setupPlotClickHandler(plotDiv, angle1, angle2, container, type = 'surve
       let energyInfo = '';
       if (type === 'qm' && csvData) {
         // Find the data point matching the clicked coordinates
+        // CSV data may use 360° instead of 0° due to calculation conventions
         const dataPoint = csvData.find(d => {
           const d1 = d[angle1Key];
           const d2 = d[angle2Key];
-          return d1 === normalizedX && d2 === normalizedY;
+          // Check exact match
+          if (d1 === normalizedX && d2 === normalizedY) return true;
+          // Check 0/360 equivalence
+          const x1 = normalizedX === 0 ? 360 : normalizedX;
+          const y1 = normalizedY === 0 ? 360 : normalizedY;
+          if (d1 === x1 && d2 === y1) return true;
+          return false;
         });
 
         if (dataPoint && dataPoint.qm_energy !== undefined) {
