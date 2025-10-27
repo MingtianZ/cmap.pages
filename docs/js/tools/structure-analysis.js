@@ -2,6 +2,10 @@
 import { XYZViewer } from '../viewer.js';
 import { getAtomName, identifyDihedral, BACKBONE_DIHEDRALS } from '../t3ps-config.js';
 
+// Module-level variables for structure data
+let currentStructure = null;
+let currentFileData = null;
+
 export function getHTML() {
   return `
     <div class="structure-analysis-container" style="display: flex; height: 100%; gap: 10px;">
@@ -68,8 +72,6 @@ export async function init() {
   const viewer = new XYZViewer('viewer-analysis', {
     backgroundColor: 'white'
   });
-
-  let currentStructure = null; // Store loaded structure data
 
   // Load and display survey plots
   await loadSurveyPlots();
@@ -713,8 +715,6 @@ function clearScatterFromCMAPs() {
     }
   });
 }
-
-let currentFileData = null; // Store current file data for download
 
 function updateFileInfo(fileName, atomCount, baseCount) {
   const fileInfoDiv = document.getElementById('fileInfo-analysis');
