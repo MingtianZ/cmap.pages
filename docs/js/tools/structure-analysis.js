@@ -858,7 +858,8 @@ function extractFirstModelCIF(text) {
       // Filter to keep only model 1
       if (modelIdx === -1) {
         // No model column, keep all rows (single model)
-        out.push(...rows);
+        // Use Array.concat() for large arrays to avoid stack overflow
+        rows.forEach(r => out.push(r));
       } else {
         // Filter rows where model number is '1'
         const filtered = rows.filter(r => {
@@ -867,7 +868,8 @@ function extractFirstModelCIF(text) {
           if (!v || v === '.' || v === '?') return true;
           return v === '1';
         });
-        out.push(...filtered);
+        // Use forEach instead of spread operator for large arrays
+        filtered.forEach(r => out.push(r));
       }
       continue;
     }
